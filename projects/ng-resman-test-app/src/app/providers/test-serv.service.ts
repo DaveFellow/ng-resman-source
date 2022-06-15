@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BaseResourceManager } from 'dist/ng-resman';
+import { BaseResourceManager } from '@davefellow/ng-resource-manager';
 
 @Injectable({
   providedIn: 'root'
