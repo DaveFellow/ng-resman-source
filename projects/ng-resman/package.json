@@ -1,6 +1,6 @@
 {
-  "name": "@davefellow/ng-resource-manager",
-  "version": "1.0.1",
+  "name": "ng-resource-manager",
+  "version": "0.5.0",
   "private": false,
   "peerDependencies": {
     "@angular/common": "^13.3.0",

@@ -25,7 +25,7 @@ export class RoutesManager {
     constructor(options: RoutesOptions) {
         this.prefix = options.prefix || '';
         this.apiUrl = options.apiUrl || '';
-        this.idLocation = options.idLocation || 'afterPath';
+        this.idLocation = options.idLocation || 'beforePath';
     }
 
     public build(actionName: string, id?: ResourceId, customPath: string = '') {
@@ -45,7 +45,7 @@ export class RoutesManager {
     }
 
     public concatId(id: ResourceId, path: string = ''): string {
-        const idAfter = this.idLocation == 'afterPath';
+        const idAfter: boolean = this.idLocation == 'afterPath';
 
         if (!path)
             return `${id}`;

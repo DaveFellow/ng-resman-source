@@ -9,7 +9,9 @@ describe('RoutesManager', () => {
 
   beforeEach(() => {
     routesManager = new RoutesManager({
-      prefix: 'test'
+      prefix: 'test',
+      idLocation: 'afterPath',
+      apiUrl: ''
     })
   })
 
@@ -61,8 +63,12 @@ describe('RoutesManager', () => {
   })
 
   it('should build custom path with id AFTER', () => {
-    const path = routesManager.concatId(1, 'custom-destroy');
-    expect(path).toBe('custom-destroy/1');
+    routesManager = new RoutesManager({
+      idLocation: 'afterPath'
+    })
+    routesManager.setPath('destroy', 'destroy')
+    const path = routesManager.concatId(1, 'destroy');
+    expect(path).toBe('destroy/1');
   })
 
   it('should build custom path with id BEFORE', () => {
