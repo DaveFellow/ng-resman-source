@@ -2,6 +2,7 @@
  * Public API Surface of ng-resman
  */
 
-export * from './lib/BaseResourceManager';
+export * from './lib/ResourceManager';
 export * from './lib/Entities';
-export * from './lib/ResourceStatus';
+export * from './lib/StatusManager';
+export * from './lib/RoutesManager';

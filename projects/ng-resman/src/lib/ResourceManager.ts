@@ -1,45 +1,29 @@
 import { HttpClient, HttpResponse } from "@angular/common/http";
 import { catchError, map, Observable } from "rxjs";
-import { ResourceManager, ResourceId } from "./Entities";
-import { ResourceStatusManager } from "./ResourceStatus";
+import { Resource, ResourceId, RoutesOptions } from "./Entities";
+import { RoutesManager } from "./RoutesManager";
+import { StatusManager } from "./StatusManager";
 
-export abstract class BaseResourceManager<T> implements ResourceManager<T> {
-    private prefix: string = '';
+export abstract class ResourceManager<T> implements Resource<T> {
+    public readonly status: StatusManager = new StatusManager;
 
-    public readonly status: ResourceStatusManager = new ResourceStatusManager;
-
-    constructor(public http: HttpClient) {}
-
-    // URL
-    protected buildUrl = (route: string): string => `${this.prefix}/${route}`;
-
-    protected buildListUrl = (customRoute?: string) => 
-        this.buildUrl(customRoute || '');
+    protected readonly routes: RoutesManager;
     
-    protected buildDetailsUrl = (id: ResourceId, customRoute?: string) => 
-        this.buildUrl(customRoute ? `${customRoute}/${id}` : `${id}`);
-    
-    protected buildCreateUrl = (customRoute?: string) => 
-        this.buildUrl(customRoute || 'store');
-    
-    protected buildUpdateUrl = (id: ResourceId, customRoute?: string) => 
-        this.buildUrl(customRoute ? `${customRoute}/${id}` : `update/${id}`);
-    
-    protected buildDeleteUrl = (id:ResourceId , customRoute?: string) => 
-        this.buildUrl(customRoute ? `${customRoute}/${id}` : `delete/${id}`);
-
-
-    // PREFIX
-    public getPrefix = (): string => this.prefix; 
-
-    protected setPrefix(prefix: string): void {
-        this.prefix = prefix;
+    constructor(
+        public http: HttpClient,
+        public prefix: string = '',
+        public routesOptions?: RoutesOptions
+    ) {
+        this.routes = new RoutesManager({
+            prefix:     prefix || routesOptions?.prefix,
+            apiUrl:     routesOptions?.apiUrl,
+            idLocation: routesOptions?.idLocation
+        });
     }
-
 
     // RESOURCE ACTIONS
     list(customRoute?: string): Observable<T[]> {
-        const url: string = this.buildListUrl(customRoute);
+        const url: string = this.routes.build('list', customRoute);
         const request: Observable<Object> = this.http.get(url);
 
         return this.pipeRequest(request, 'list').pipe(
@@ -49,7 +33,7 @@ export abstract class BaseResourceManager<T> implements ResourceManager<T> {
     
     
     details(id: ResourceId, customRoute?: string): Observable<T> {
-        const url: string = this.buildDetailsUrl(id, customRoute);
+        const url: string = this.routes.build('details', id, customRoute);
         const request: Observable<Object> = this.http.get(url);
 
         return this.pipeRequest(request, 'details').pipe(
@@ -59,7 +43,7 @@ export abstract class BaseResourceManager<T> implements ResourceManager<T> {
     
     
     create(body: Partial<T>, customRoute?: string): Observable<Object> {
-        const url: string = this.buildCreateUrl(customRoute);
+        const url: string = this.routes.build('create', customRoute);
         const request: Observable<Object> = this.http.post(url, body);
 
         return this.pipeRequest(request, 'create').pipe(
@@ -69,7 +53,7 @@ export abstract class BaseResourceManager<T> implements ResourceManager<T> {
     
     
     update(id: ResourceId, body: Partial<T>, customRoute?: string): Observable<Object> {
-        const url: string = this.buildUpdateUrl(id, customRoute);
+        const url: string = this.routes.build('update', id, customRoute);
         const request: Observable<Object> = this.http.put(url, body);
 
         return this.pipeRequest(request, 'update').pipe(
@@ -78,11 +62,11 @@ export abstract class BaseResourceManager<T> implements ResourceManager<T> {
     }
     
     
-    delete(id: ResourceId, customRoute?: string): Observable<Object> {
-        const url: string = this.buildDeleteUrl(id, customRoute);
+    destroy(id: ResourceId, customRoute?: string): Observable<Object> {
+        const url: string = this.routes.build('destroy', id, customRoute);
         const request: Observable<Object> = this.http.delete(url);
 
-        return this.pipeRequest(request, 'delete').pipe(
+        return this.pipeRequest(request, 'destroy').pipe(
             map(response => (<HttpResponse<Object>>response).body as Object)
         );
     }

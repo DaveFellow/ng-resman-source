@@ -15,6 +15,6 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
     this.testServ.list().subscribe();
     this.testServ.details(123).subscribe();
-    this.testServ.delete(777).subscribe();
+    this.testServ.destroy(777).subscribe();
   }
 }

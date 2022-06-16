@@ -1,14 +1,15 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BaseResourceManager } from '@davefellow/ng-resource-manager';
+import { ResourceManager } from 'dist/ng-resman';
 
 @Injectable({
   providedIn: 'root'
 })
-export class TestServService extends BaseResourceManager<Object> {
+export class TestServService extends ResourceManager<Object> {
 
   constructor(override http: HttpClient) {
-    super(http);
-    this.setPrefix('test-test-test');
+    super(http, 'test2test', {
+      apiUrl: 'http://localhost:8000'
+    });
   }
 }

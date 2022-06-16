@@ -1,8 +1,8 @@
 import { Observable } from "rxjs";
-import { ResourceStatusManager } from "./ResourceStatus";
+import { StatusManager } from "./StatusManager";
 
-export interface ResourceManager<T> {
-    readonly status: ResourceStatusManager;
+export interface Resource<T> {
+    readonly status: StatusManager;
 
     list(): Observable<Object>;
     
@@ -12,11 +12,19 @@ export interface ResourceManager<T> {
     
     update(id: ResourceId, body: T): Observable<Object>;
     
-    delete(id: ResourceId): Observable<Object>;
+    destroy(id: ResourceId): Observable<Object>;
 
     pipeRequest?<T>(request: Observable<Object>): Observable<unknown>;
 }
 
 export type ResourceId = string | number;
 
-export type ResourceStatus = 'idle' | 'loading' | 'success' | 'error';
+export type Status = 'idle' | 'loading' | 'success' | 'error';
+
+export interface RoutesOptions {
+    prefix?: string,
+    apiUrl?: string,
+    idLocation?: RouteIdLocation
+}
+
+export type RouteIdLocation = 'afterPath' | 'beforePath';
