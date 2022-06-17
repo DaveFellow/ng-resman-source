@@ -28,3 +28,14 @@ export interface RoutesOptions {
 }
 
 export type RouteIdLocation = 'afterPath' | 'beforePath';
+
+export interface QueryParams {
+    [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
+}
+
+export interface ResourceActionOptions {
+    customPath?: string,
+    params?: {
+        [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>
+    }
+}

@@ -1,8 +1,13 @@
-import { HttpClient, HttpResponse } from "@angular/common/http";
+import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { catchError, map, Observable } from "rxjs";
-import { Resource, ResourceId, RoutesOptions } from "./Entities";
+import { QueryParams, Resource, ResourceActionOptions, ResourceId, RoutesOptions } from "./Entities";
 import { RoutesManager } from "./RoutesManager";
 import { StatusManager } from "./StatusManager";
+
+interface RequestSettings {
+    url: string,
+    params: HttpParams
+}
 
 export abstract class ResourceManager<T> implements Resource<T> {
     public readonly status: StatusManager = new StatusManager;
@@ -22,19 +27,21 @@ export abstract class ResourceManager<T> implements Resource<T> {
     }
 
     // RESOURCE ACTIONS
-    list(customRoute?: string): Observable<T[]> {
-        const url: string = this.routes.build('list', customRoute);
-        const request: Observable<Object> = this.http.get(url);
+    list(options: ResourceActionOptions = {}): Observable<T[]> {
+        const { url, params } = this.getRequestSettings('list', '', options);
+        
+        const request: Observable<Object> = this.http.get(url, { params });
 
         return this.pipeRequest(request, 'list').pipe(
             map(response => (<HttpResponse<T[]>>response).body as T[])
         );
     }
+
     
-    
-    details(id: ResourceId, customRoute?: string): Observable<T> {
-        const url: string = this.routes.build('details', id, customRoute);
-        const request: Observable<Object> = this.http.get(url);
+    details(id: ResourceId, options: ResourceActionOptions = {}): Observable<T> {
+        const { url, params } = this.getRequestSettings('details', id, options);
+        
+        const request: Observable<Object> = this.http.get(url, { params });
 
         return this.pipeRequest(request, 'details').pipe(
             map(response => (<HttpResponse<T>>response).body as T)
@@ -42,9 +49,10 @@ export abstract class ResourceManager<T> implements Resource<T> {
     }
     
     
-    create(body: Partial<T>, customRoute?: string): Observable<Object> {
-        const url: string = this.routes.build('create', customRoute);
-        const request: Observable<Object> = this.http.post(url, body);
+    create(body: Partial<T>, options: ResourceActionOptions = {}): Observable<Object> {
+        const { url, params } = this.getRequestSettings('create', '', options);
+        
+        const request: Observable<Object> = this.http.post(url, body, { params });
 
         return this.pipeRequest(request, 'create').pipe(
             map(response => (<HttpResponse<Object>>response).body as Object)
@@ -52,9 +60,10 @@ export abstract class ResourceManager<T> implements Resource<T> {
     }
     
     
-    update(id: ResourceId, body: Partial<T>, customRoute?: string): Observable<Object> {
-        const url: string = this.routes.build('update', id, customRoute);
-        const request: Observable<Object> = this.http.put(url, body);
+    update(id: ResourceId, body: Partial<T>, options: ResourceActionOptions = {}): Observable<Object> {
+        const { url, params } = this.getRequestSettings('update', id, options);
+
+        const request: Observable<Object> = this.http.put(url, body, { params });
 
         return this.pipeRequest(request, 'update').pipe(
             map(response => (<HttpResponse<Object>>response).body as Object)
@@ -62,13 +71,24 @@ export abstract class ResourceManager<T> implements Resource<T> {
     }
     
     
-    destroy(id: ResourceId, customRoute?: string): Observable<Object> {
-        const url: string = this.routes.build('destroy', id, customRoute);
-        const request: Observable<Object> = this.http.delete(url);
+    destroy(id: ResourceId, options: ResourceActionOptions = {}): Observable<Object> {
+        const { url, params } = this.getRequestSettings('destroy', id, options);
+
+        const request: Observable<Object> = this.http.delete(url, { params });
 
         return this.pipeRequest(request, 'destroy').pipe(
             map(response => (<HttpResponse<Object>>response).body as Object)
         );
+    }
+
+
+    getRequestSettings(actionName: string, id: ResourceId = '', options: ResourceActionOptions = {}): RequestSettings {
+        const { customPath, params } = options;
+
+        const url: string = this.routes.build(actionName, id, customPath);
+        const httpParams: HttpParams = new HttpParams({ fromObject: params });
+
+        return { url, params: httpParams };
     }
 
 
