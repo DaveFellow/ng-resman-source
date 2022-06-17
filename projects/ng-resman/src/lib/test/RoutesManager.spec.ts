@@ -20,12 +20,21 @@ describe('RoutesManager', () => {
   });
 
   it('should build route', () => {
-    expect(routesManager.build('list')).toBe(``);
+    expect(routesManager.build('list')).toBe(`test`);
   })
 
   it('should build route with API URL', () => {
     routesManager = getWithApiUrl();
-    expect(routesManager.build('list')).toBe(`${apiUrl}/`);
+    expect(routesManager.build('list')).toBe(`${apiUrl}/test`);
+  })
+
+  it('should build alternative route', () => {
+    expect(routesManager.buildUrl('list')).toBe(`test/list`);
+  })
+
+  it('should build alternative route with API URL', () => {
+    routesManager = getWithApiUrl();
+    expect(routesManager.buildUrl('list')).toBe(`${apiUrl}/test/list`);
   })
 
   it('should get Path', () => {
@@ -47,13 +56,13 @@ describe('RoutesManager', () => {
     expect(routesManager.getPath('')).toBeUndefined();
   })
 
-  it('should build default path with id AFTER', () => {
+  it('should concat default path with id AFTER', () => {
     routesManager.setPath('destroy', 'test')
     const path = routesManager.concatId(1, routesManager.getPath('destroy'));
     expect(path).toBe('test/1');
   })
 
-  it('should build default path with id BEFORE', () => {
+  it('should concat default path with id BEFORE', () => {
     routesManager = new RoutesManager({
       idLocation: 'beforePath'
     })
@@ -62,7 +71,7 @@ describe('RoutesManager', () => {
     expect(path).toBe('1/test');
   })
 
-  it('should build custom path with id AFTER', () => {
+  it('should concat custom path with id AFTER', () => {
     routesManager = new RoutesManager({
       idLocation: 'afterPath'
     })
@@ -71,7 +80,7 @@ describe('RoutesManager', () => {
     expect(path).toBe('destroy/1');
   })
 
-  it('should build custom path with id BEFORE', () => {
+  it('should concat custom path with id BEFORE', () => {
     routesManager = new RoutesManager({
       idLocation: 'beforePath'
     })

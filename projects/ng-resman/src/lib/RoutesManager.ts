@@ -39,9 +39,17 @@ export class RoutesManager {
     }
 
     public buildUrl(route: string = ''): string {
-        return this.apiUrl
-            ? `${this.apiUrl}/${route}`
-            : route;
+        const urlArr: string[] = [];
+
+        if (this.apiUrl)
+            urlArr.push(this.apiUrl);
+
+        if (this.prefix)
+            urlArr.push(this.prefix);
+
+        const url: string = urlArr.reduce((a, b) => `${a}/${b}`);
+
+        return `${url}/${route}`.replace(/\/$/, '');
     }
 
     public concatId(id: ResourceId, path: string = ''): string {
