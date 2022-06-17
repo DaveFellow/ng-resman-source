@@ -16,5 +16,6 @@ export class AppComponent implements OnInit {
     this.testServ.list().subscribe();
     this.testServ.details(123).subscribe();
     this.testServ.destroy(777).subscribe();
+    this.testServ.releasePayment(4).subscribe();
   }
 }
