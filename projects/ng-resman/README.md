@@ -96,7 +96,7 @@ The routes can be built using the *.build()* method, which will accept the name 
 
 This method is designed to work only with already set paths. For building any arbitrary string, there's the *buildUrl()* method, more about it below.
 
-Whenever a *customRoute* parameter is specified in any method (including in the *.build()* method), it will substitute the PATH in the structure.
+Whenever a *customPath* parameter is specified in any method (including in the *.build()* method), it will substitute the PATH in the structure.
 
 Also, by default, all action paths are empty strings until they are specified in the desired action.
 
@@ -132,22 +132,48 @@ An string that will be put in the beginning of the route, right before the prefi
 This should be used to avoid putting it inside the prefix itself, though as stated before, it's highly recommended using an *HttpInterceptor* for this task, unless we want the specific resource service to connect to a different base Url.
 
 
-### prefix
+#### prefix
 This is just the route prefix put in a different place. If specified, it will be ignored anyway unless the second parameter on the *super* keyword is not truthy.
 
 
-### idLocation
+#### idLocation
 This accepts an *RouteIdLocation* type of value ('afterPath' and 'beforePath') and will configure the position of the id (if present) in the route, relative to the path segment. For example:
 
     {PREFIX}/{ID}/{PATH} <-- beforePath
     {PREFIX}/{PATH}/{ID} <-- afterPath.
 
 
-### Custom Path per request
-You can add an optional string parameter to each action method call so it will use that one instead:
+### Built-in actions options
+Each built-in action can accept an optional *options* parameter, as a last parameter.
 
-    this.resourceService.details(5, 'custom-path')
-    this.resourceService.create('custom-path')
+This is a *ResourceActionOptions* object that can have the one of the following properties:
+#### customPath
+It's an arbitrary *string* type property. It will substitute the set path in the specific request call where it's set, for example:
+
+    const options: ResourceActionOptions = {
+        customPath: 'custom-path'
+    };
+
+    this.resourceService.details(5, options)
+    // /my-prefix/5/custom-path
+
+    this.resourceService.create(options)
+    // /my-prefix/custom-path
+
+
+#### params
+It's an "key: value" pairs object. Any property added will be sent as query params in the request. For example:
+
+    const options: ResourceActionOptions = {
+        params: {
+            page: 2,
+            sort_by: 'name',
+            show: 15
+        }
+    };
+
+    this.resourceService.list()
+    // /my-prefix?page=2&sort_by=name&show=15
 
 
 ### Build Routes with Arbitrary Path
