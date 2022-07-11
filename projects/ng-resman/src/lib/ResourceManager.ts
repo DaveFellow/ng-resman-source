@@ -33,7 +33,7 @@ export abstract class ResourceManager<T> implements Resource<T> {
         const request: Observable<Object> = this.http.get(url, { params });
 
         return this.pipeRequest(request, 'list').pipe(
-            map(response => (<HttpResponse<T[]>>response).body as T[])
+            map(response => response as T[])
         );
     }
 
@@ -44,7 +44,7 @@ export abstract class ResourceManager<T> implements Resource<T> {
         const request: Observable<Object> = this.http.get(url, { params });
 
         return this.pipeRequest(request, 'details').pipe(
-            map(response => (<HttpResponse<T>>response).body as T)
+            map(response => response as T)
         );
     }
     
@@ -55,7 +55,7 @@ export abstract class ResourceManager<T> implements Resource<T> {
         const request: Observable<Object> = this.http.post(url, body, { params });
 
         return this.pipeRequest(request, 'create').pipe(
-            map(response => (<HttpResponse<Object>>response).body as Object)
+            map(response => response as Object)
         );
     }
     
@@ -66,7 +66,7 @@ export abstract class ResourceManager<T> implements Resource<T> {
         const request: Observable<Object> = this.http.put(url, body, { params });
 
         return this.pipeRequest(request, 'update').pipe(
-            map(response => (<HttpResponse<Object>>response).body as Object)
+            map(response => response as Object)
         );
     }
     
@@ -77,7 +77,7 @@ export abstract class ResourceManager<T> implements Resource<T> {
         const request: Observable<Object> = this.http.delete(url, { params });
 
         return this.pipeRequest(request, 'destroy').pipe(
-            map(response => (<HttpResponse<Object>>response).body as Object)
+            map(response => response as Object)
         );
     }
 
@@ -100,7 +100,7 @@ export abstract class ResourceManager<T> implements Resource<T> {
             map(response => {
                 const httpResponse = response as HttpResponse<T>;
                 this.status.setSuccess(actionName);
-                return httpResponse.body;
+                return httpResponse;
             }),
             catchError((err, response) => {
                 console.error(response);

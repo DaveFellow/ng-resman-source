@@ -14,9 +14,6 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.testServ.list().subscribe();
-    this.testServ.details(123).subscribe();
-    this.testServ.destroy(777).subscribe();
-    this.testServ.releasePayment(4).subscribe();
+    this.testServ.create({}).subscribe();
   }
 }
