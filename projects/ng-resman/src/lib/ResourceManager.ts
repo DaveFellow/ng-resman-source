@@ -13,7 +13,7 @@ export abstract class ResourceManager<T> implements Resource<T> {
     public readonly status: StatusManager = new StatusManager;
 
     protected readonly routes: RoutesManager;
-    
+
     constructor(
         public http: HttpClient,
         public prefix: string = '',
@@ -27,39 +27,39 @@ export abstract class ResourceManager<T> implements Resource<T> {
     }
 
     // RESOURCE ACTIONS
-    list(options: ResourceActionOptions = {}): Observable<T[]> {
+    list(options: ResourceActionOptions = {}): Observable<Object> {
         const { url, params } = this.getRequestSettings('list', '', options);
-        
+
         const request: Observable<Object> = this.http.get(url, { params });
 
         return this.pipeRequest(request, 'list').pipe(
-            map(response => response as T[])
+            map(response => response as Object)
         );
     }
 
-    
+
     details(id: ResourceId, options: ResourceActionOptions = {}): Observable<T> {
         const { url, params } = this.getRequestSettings('details', id, options);
-        
+
         const request: Observable<Object> = this.http.get(url, { params });
 
         return this.pipeRequest(request, 'details').pipe(
             map(response => response as T)
         );
     }
-    
-    
+
+
     create(body: Partial<T>, options: ResourceActionOptions = {}): Observable<Object> {
         const { url, params } = this.getRequestSettings('create', '', options);
-        
+
         const request: Observable<Object> = this.http.post(url, body, { params });
 
         return this.pipeRequest(request, 'create').pipe(
             map(response => response as Object)
         );
     }
-    
-    
+
+
     update(id: ResourceId, body: Partial<T>, options: ResourceActionOptions = {}): Observable<Object> {
         const { url, params } = this.getRequestSettings('update', id, options);
 
@@ -69,8 +69,8 @@ export abstract class ResourceManager<T> implements Resource<T> {
             map(response => response as Object)
         );
     }
-    
-    
+
+
     destroy(id: ResourceId, options: ResourceActionOptions = {}): Observable<Object> {
         const { url, params } = this.getRequestSettings('destroy', id, options);
 
