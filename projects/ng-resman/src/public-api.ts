@@ -3,6 +3,6 @@
  */
 
 export * from './lib/ResourceManager';
-export * from './lib/Entities';
+export * from './lib/Models';
 export * from './lib/StatusManager';
 export * from './lib/RoutesManager';

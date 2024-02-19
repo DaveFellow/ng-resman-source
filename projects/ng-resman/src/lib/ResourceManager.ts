@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { catchError, map, Observable } from "rxjs";
-import { ObjectLiteral, QueryParams, Resource, ResourceActionOptions, ResourceId, RoutesOptions } from "./Entities";
+import { ObjectLiteral, QueryParams, Resource, ResourceActionOptions, ResourceId, RoutesOptions } from "./Models";
 import { RoutesManager } from "./RoutesManager";
 import { StatusManager } from "./StatusManager";
 

@@ -1,4 +1,4 @@
-import { ResourceId, RouteIdLocation, RoutesOptions } from "./Entities";
+import { ResourceId, RouteIdLocation, RoutesOptions } from "./Models";
 
 interface PathList {
     [key: string]: string

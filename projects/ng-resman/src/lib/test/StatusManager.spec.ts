@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Status } from '../Entities';
+import { Status } from '../Models';
 
 import { StatusManager } from '../StatusManager';
 

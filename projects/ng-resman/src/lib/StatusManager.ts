@@ -1,4 +1,4 @@
-import { Status } from "./Entities"
+import { Status } from "./Models"
 
 interface StatusList {
     [key: string]: Status
