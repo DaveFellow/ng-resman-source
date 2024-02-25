@@ -10,7 +10,7 @@ export class StatusManager {
         details: 'idle',
         create:  'idle',
         update:  'idle',
-        destroy:  'idle'
+        delete:  'idle'
     }
 
     public get = (actionName: string): Status => this.statusList[actionName];

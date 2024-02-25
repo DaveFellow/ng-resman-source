@@ -11,7 +11,7 @@ describe('StatusManager', () => {
     statusManager.set('details', 'idle');
     statusManager.set('create', 'idle');
     statusManager.set('update', 'idle');
-    statusManager.set('destroy', 'idle');
+    statusManager.set('delete', 'idle');
   })
 
   it('should be created', () => {
@@ -75,8 +75,8 @@ describe('StatusManager', () => {
   })
 
   it('should be error', () => {
-    statusManager.setError('destroy');
-    expect(statusManager.isError('destroy')).toBeTrue();
+    statusManager.setError('delete');
+    expect(statusManager.isError('delete')).toBeTrue();
   })
 
   it('should NOT be idle', () => {
@@ -95,8 +95,8 @@ describe('StatusManager', () => {
   })
 
   it('should NOT be error', () => {
-    statusManager.setIdle('destroy');
-    expect(statusManager.isError('destroy')).toBeFalse();
+    statusManager.setIdle('delete');
+    expect(statusManager.isError('delete')).toBeFalse();
   })
 
 });

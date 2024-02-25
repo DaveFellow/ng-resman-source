@@ -1,22 +1,23 @@
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { catchError, map, Observable } from "rxjs";
-import { Resource, ResourceActionOptions, ResourceId, RoutesOptions } from "./Models";
+import { ResourceManagement, ResourceActionOptions, ResourceId, ResourceResponse, RoutesOptions } from "./Models";
 import { RoutesManager } from "./RoutesManager";
 import { StatusManager } from "./StatusManager";
 import { Signal, inject } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
+import { GetResource, PostResource } from "./ResourceManagerDecorators";
 
 interface RequestSettings {
     url: string,
     params: HttpParams
 }
 
-export abstract class ResourceManager<T> implements Resource<T> {
+export abstract class ResourceManager<BaseResponseT = any, BaseBodyT = BaseResponseT> implements ResourceManagement<BaseResponseT> {
     public readonly status: StatusManager = new StatusManager;
 
-    private readonly http: HttpClient = this.httpClient ?? inject(HttpClient);
+    public readonly http: HttpClient;
 
-    protected readonly routes: RoutesManager;
+    public readonly routes: RoutesManager;
 
     constructor(
         public httpClient?: HttpClient,
@@ -24,6 +25,8 @@ export abstract class ResourceManager<T> implements Resource<T> {
         public routesOptions?: RoutesOptions,
         public useSignals?: boolean
     ) {
+        this.http = this.httpClient ?? inject(HttpClient);
+
         this.routes = new RoutesManager({
             prefix:     prefix || routesOptions?.prefix || '',
             apiUrl:     routesOptions?.apiUrl,
@@ -31,65 +34,41 @@ export abstract class ResourceManager<T> implements Resource<T> {
         });
     }
 
-    // RESOURCE ACTIONS
-    list<ResponseT = T[]>(options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> | Signal<HttpResponse<ResponseT>> {
-        const { url, params } = this.getRequestSettings('list', '', options);
-
-        const request = this.http.get<ResponseT>(url, { params });
-
-        return this.pipeRequest<ResponseT>(request, 'list');
+    @GetResource({ path: '' })
+    list<ResponseT = BaseResponseT[]>(): ResourceResponse<ResponseT> {
+        return new Observable;
     }
 
-
-    details<ResponseT = T>(id: ResourceId, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
-        const { url, params } = this.getRequestSettings('details', id, options);
-
-        const request = this.http.get<ResponseT>(url, { params });
-
-        return this.pipeRequest<ResponseT>(request, 'details');
+    @GetResource({ path: '' })
+    details<ResponseT = BaseResponseT>(id: ResourceId): ResourceResponse<ResponseT> {
+        return new Observable;
     }
 
-
-    create<ResponseT = T, BodyT = Partial<T>>(body: BodyT, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
-        const { url, params } = this.getRequestSettings('create', '', options);
-
-        const request: Observable<Object> = this.http.post(url, body, { params });
-
-        return this.pipeRequest(request, 'create');
+    @PostResource({ path: '' })
+    create<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(body: BodyT): ResourceResponse<ResponseT> {
+        return new Observable;
     }
 
-
-    update<ResponseT = T, BodyT = Partial<T>>(id: ResourceId, body: BodyT, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
-        const { url, params } = this.getRequestSettings('update', id, options);
-
-        const request = this.http.put<ResponseT>(url, body, { params });
-
-        return this.pipeRequest(request, 'update');
+    @PostResource({ path: '' })
+    update<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(id: ResourceId, body: BodyT): ResourceResponse<ResponseT> {
+        return new Observable;
     }
 
-
-    delete<ResponseT>(id: ResourceId, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
-        const { url, params } = this.getRequestSettings('delete', id, options);
-
-        const request = this.http.delete<ResponseT>(url, { params });
-
-        return this.pipeRequest(request, 'delete');
+    @PostResource({ path: '' })
+    delete<ResponseT>(id: ResourceId): ResourceResponse<ResponseT> {
+        return new Observable;
     }
 
+    getRequestSettings(options: ResourceActionOptions = {}): RequestSettings {
+        const { path, params, id } = options;
 
-    getRequestSettings(actionName: string, id: ResourceId = '', options: ResourceActionOptions = {}): RequestSettings {
-        const { customPath, params } = options;
-
-        const url: string = this.routes.build(actionName, id, customPath);
+        const url: string = this.routes.build(path ?? '', id);
         const httpParams: HttpParams = new HttpParams({ fromObject: params });
 
         return { url, params: httpParams };
     }
 
-
-    // REQUEST PRE-PROCESSING
-    // Hacer que esta función se aplique por medio de un Decorador
-    pipeRequest<ResponseT = T, BodyT = T>(request: Observable<BodyT | any>, actionName: string = ''): Observable<HttpResponse<ResponseT>> {
+    pipeRequest<ResponseT = BaseResponseT, BodyT = ResponseT>(request: Observable<BodyT | any>, actionName: string = ''): Observable<HttpResponse<ResponseT>> {
         this.status.setLoading(actionName);
 
         return request.pipe(

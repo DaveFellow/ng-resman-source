@@ -57,8 +57,8 @@ describe('RoutesManager', () => {
   })
 
   it('should concat default path with id AFTER', () => {
-    routesManager.setPath('destroy', 'test')
-    const path = routesManager.concatId(1, routesManager.getPath('destroy'));
+    routesManager.setPath('delete', 'test')
+    const path = routesManager.concatId(1, routesManager.getPath('delete'));
     expect(path).toBe('test/1');
   })
 
@@ -66,8 +66,8 @@ describe('RoutesManager', () => {
     routesManager = new RoutesManager({
       idLocation: 'beforePath'
     })
-    routesManager.setPath('destroy', 'test')
-    const path = routesManager.concatId(1, routesManager.getPath('destroy'));
+    routesManager.setPath('delete', 'test')
+    const path = routesManager.concatId(1, routesManager.getPath('delete'));
     expect(path).toBe('1/test');
   })
 
@@ -75,18 +75,18 @@ describe('RoutesManager', () => {
     routesManager = new RoutesManager({
       idLocation: 'afterPath'
     })
-    routesManager.setPath('destroy', 'destroy')
-    const path = routesManager.concatId(1, 'destroy');
-    expect(path).toBe('destroy/1');
+    routesManager.setPath('delete', 'delete')
+    const path = routesManager.concatId(1, 'delete');
+    expect(path).toBe('delete/1');
   })
 
   it('should concat custom path with id BEFORE', () => {
     routesManager = new RoutesManager({
       idLocation: 'beforePath'
     })
-    routesManager.setPath('destroy', 'destroy')
-    const path = routesManager.concatId(1, 'destroy');
-    expect(path).toBe('1/destroy');
+    routesManager.setPath('delete', 'delete')
+    const path = routesManager.concatId(1, 'delete');
+    expect(path).toBe('1/delete');
   })
 
   it('should build path with ONLY id', () => {

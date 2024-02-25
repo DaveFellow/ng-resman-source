@@ -14,27 +14,17 @@ export class RoutesManager {
 
     private readonly idLocation: RouteIdLocation;
 
-    public readonly paths: PathList = {
-        list: '',
-        details: '',
-        create: '',
-        update: '',
-        destroy: ''
-    };
-
     constructor(options: RoutesOptions) {
         this.prefix = options.prefix || '';
         this.apiUrl = options.apiUrl || '';
         this.idLocation = options.idLocation || 'beforePath';
     }
 
-    public build(actionName: string, id?: ResourceId, customPath: string = '') {
-        const path: string = this.getPath(actionName);
-
+    public build(path: string, id?: ResourceId) {
         if (!id)
-            return this.buildUrl(customPath || path);
+            return this.buildUrl(path);
         
-        const route: string = this.concatId(id, customPath || path);
+        const route: string = this.concatId(id, path);
         return this.buildUrl(route);
     }
 
@@ -61,12 +51,5 @@ export class RoutesManager {
         return idAfter
             ? `${path}/${id}`
             : `${id}/${path}`;
-    }
-
-    public getPath = (actionName: string): string => this.paths[actionName];
-
-    public setPath(actionName: string, path: string): void {
-        if (!actionName) return;
-        this.paths[actionName] = path;
     }
 }
