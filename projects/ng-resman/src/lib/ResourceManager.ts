@@ -1,8 +1,10 @@
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { catchError, map, Observable } from "rxjs";
-import { ObjectLiteral, QueryParams, Resource, ResourceActionOptions, ResourceId, RoutesOptions } from "./Models";
+import { Resource, ResourceActionOptions, ResourceId, RoutesOptions } from "./Models";
 import { RoutesManager } from "./RoutesManager";
 import { StatusManager } from "./StatusManager";
+import { Signal, inject } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 
 interface RequestSettings {
     url: string,
@@ -12,73 +14,66 @@ interface RequestSettings {
 export abstract class ResourceManager<T> implements Resource<T> {
     public readonly status: StatusManager = new StatusManager;
 
+    private readonly http: HttpClient = this.httpClient ?? inject(HttpClient);
+
     protected readonly routes: RoutesManager;
 
     constructor(
-        public http: HttpClient,
-        public prefix: string = '',
-        public routesOptions?: RoutesOptions
+        public httpClient?: HttpClient,
+        public prefix?: string,
+        public routesOptions?: RoutesOptions,
+        public useSignals?: boolean
     ) {
         this.routes = new RoutesManager({
-            prefix:     prefix || routesOptions?.prefix,
+            prefix:     prefix || routesOptions?.prefix || '',
             apiUrl:     routesOptions?.apiUrl,
             idLocation: routesOptions?.idLocation
         });
     }
 
     // RESOURCE ACTIONS
-    list<ResponseT>(options: ResourceActionOptions = {}): Observable<ResponseT> {
+    list<ResponseT = T[]>(options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> | Signal<HttpResponse<ResponseT>> {
         const { url, params } = this.getRequestSettings('list', '', options);
 
-        const request: Observable<Object> = this.http.get(url, { params });
+        const request = this.http.get<ResponseT>(url, { params });
 
-        return this.pipeRequest(request, 'list').pipe(
-            map(response => response as ResponseT)
-        );
+        return this.pipeRequest<ResponseT>(request, 'list');
     }
 
 
-    details(id: ResourceId, options: ResourceActionOptions = {}): Observable<T> {
+    details<ResponseT = T>(id: ResourceId, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
         const { url, params } = this.getRequestSettings('details', id, options);
 
-        const request: Observable<Object> = this.http.get(url, { params });
+        const request = this.http.get<ResponseT>(url, { params });
 
-        return this.pipeRequest(request, 'details').pipe(
-            map(response => response as T)
-        );
+        return this.pipeRequest<ResponseT>(request, 'details');
     }
 
 
-    create<ResponseT>(body: Partial<T>, options: ResourceActionOptions = {}): Observable<ResponseT> {
+    create<ResponseT = T, BodyT = Partial<T>>(body: BodyT, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
         const { url, params } = this.getRequestSettings('create', '', options);
 
         const request: Observable<Object> = this.http.post(url, body, { params });
 
-        return this.pipeRequest(request, 'create').pipe(
-            map(response => response as ResponseT)
-        );
+        return this.pipeRequest(request, 'create');
     }
 
 
-    update<ResponseT>(id: ResourceId, body: Partial<T>, options: ResourceActionOptions = {}): Observable<ResponseT> {
+    update<ResponseT = T, BodyT = Partial<T>>(id: ResourceId, body: BodyT, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
         const { url, params } = this.getRequestSettings('update', id, options);
 
-        const request: Observable<Object> = this.http.put(url, body, { params });
+        const request = this.http.put<ResponseT>(url, body, { params });
 
-        return this.pipeRequest(request, 'update').pipe(
-            map(response => response as ResponseT)
-        );
+        return this.pipeRequest(request, 'update');
     }
 
 
-    destroy<ResponseT>(id: ResourceId, options: ResourceActionOptions = {}): Observable<ResponseT> {
-        const { url, params } = this.getRequestSettings('destroy', id, options);
+    delete<ResponseT>(id: ResourceId, options: ResourceActionOptions = {}): Observable<HttpResponse<ResponseT>> {
+        const { url, params } = this.getRequestSettings('delete', id, options);
 
-        const request: Observable<Object> = this.http.delete(url, { params });
+        const request = this.http.delete<ResponseT>(url, { params });
 
-        return this.pipeRequest(request, 'destroy').pipe(
-            map(response => response as ResponseT)
-        );
+        return this.pipeRequest(request, 'delete');
     }
 
 
@@ -93,17 +88,17 @@ export abstract class ResourceManager<T> implements Resource<T> {
 
 
     // REQUEST PRE-PROCESSING
-    pipeRequest(request: Observable<Object>, actionName: string = ''): Observable<unknown> {
+    // Hacer que esta función se aplique por medio de un Decorador
+    pipeRequest<ResponseT = T, BodyT = T>(request: Observable<BodyT | any>, actionName: string = ''): Observable<HttpResponse<ResponseT>> {
         this.status.setLoading(actionName);
 
         return request.pipe(
             map(response => {
-                const httpResponse = response as HttpResponse<T>;
+                const httpResponse = response;
                 this.status.setSuccess(actionName);
                 return httpResponse;
             }),
             catchError((err, response) => {
-                console.error(response);
                 this.status.setError(actionName);
                 throw err;
             })

@@ -1,20 +1,22 @@
 import { Observable } from "rxjs";
 import { StatusManager } from "./StatusManager";
+import { Signal } from "@angular/core";
+import { HttpResponse } from "@angular/common/http";
 
 export interface Resource<T> {
     readonly status: StatusManager;
 
-    list(): Observable<unknown>;
+    list<ResponseT = T[]>(): Observable<HttpResponse<ResponseT>> | Signal<HttpResponse<ResponseT>>;
 
-    details(id: ResourceId): Observable<T>;
+    details<ResponseT = T>(id: ResourceId):  Observable<HttpResponse<ResponseT>> | Signal<HttpResponse<ResponseT>>;
 
-    create(body: T): Observable<unknown>;
+    create<ResponseT = T, BodyT = Partial<T>>(body: BodyT): Observable<HttpResponse<ResponseT>> | Signal<HttpResponse<ResponseT>>;
 
-    update(id: ResourceId, body: T): Observable<unknown>;
+    update<ResponseT = T, BodyT = Partial<T>>(id: ResourceId, body: BodyT): Observable<HttpResponse<ResponseT>> | Signal<HttpResponse<ResponseT>>;
 
-    destroy(id: ResourceId): Observable<unknown>;
+    delete<ResponseT = T>(id: ResourceId): Observable<HttpResponse<ResponseT>> | Signal<HttpResponse<ResponseT>>;
 
-    pipeRequest?<T>(request: Observable<unknown>): Observable<unknown>;
+    pipeRequest?<ResponseT = T, BodyT = Partial<T>>(request: Observable<BodyT>): Observable<HttpResponse<ResponseT>>;
 }
 
 export type ResourceId = string | number;
@@ -38,8 +40,4 @@ export interface ResourceActionOptions {
     params?: {
         [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>
     }
-}
-
-export interface ObjectLiteral {
-  [key: string]: any;
 }
