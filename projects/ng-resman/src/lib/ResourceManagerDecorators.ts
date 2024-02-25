@@ -7,7 +7,7 @@ import { ResourceManager } from "./ResourceManager";
 export function ResourceAction<ResponseT = any, BodyT = ResponseT>(options: ResourceActionOptions): ResourceActionDecorator {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         descriptor.value = function (this: ResourceManager<ResponseT>, ...args: any[]) {
-            updateOptions(propertyKey, options, args);
+            options = updateOptions(propertyKey, options, args);
 
             if (options.path === undefined) {
                 options.path = propertyKey;
@@ -63,8 +63,9 @@ function getRequest<ResponseT>(options: {
     }
 }
 
-function updateOptions(propertyKey: string, options: ResourceActionOptions, args: any[]): void {
-    if (!args.length) return;
+function updateOptions(propertyKey: string, options: ResourceActionOptions, args: any[]): ResourceActionOptions {
+    if (!args.length)
+        return options;
 
     switch(propertyKey) {
         case 'details':
@@ -83,10 +84,11 @@ function updateOptions(propertyKey: string, options: ResourceActionOptions, args
         default:
             const optionsProps = [ 'type', 'path', 'id', 'idLocation', 'body', 'params' ];
 
-            for (let i = 0; i < Math.max(args.length, 2); i++) {
+            for (let i = 0; i < Math.min(args.length, 2); i++) {
                 if (typeof args[i] !== 'object') continue;
                 options = {...options, ...args[i]};
-                return;
+                break;
             }
     }
+    return options;
 }

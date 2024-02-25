@@ -1,6 +1,6 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { ResourceId, ResourceManager, ResourceResponse } from 'dist/ng-resman';
+import { ResourceActionOptions, ResourceId, ResourceManager, ResourceResponse } from 'dist/ng-resman';
 import { GetResource, ResourceAction } from 'projects/ng-resman/src/lib/ResourceManagerDecorators';
 import { Observable } from 'rxjs';
 
@@ -37,7 +37,7 @@ export class TestServService extends ResourceManager<PokemonData> {
     id: 'pikachu',
     path: ''
   })
-  public getPokemon(foo: string, bar: number, asd: Object) {
+  public getPokemon(options: ResourceActionOptions) {
     return new Observable<PokemonData>;
   }
 }
