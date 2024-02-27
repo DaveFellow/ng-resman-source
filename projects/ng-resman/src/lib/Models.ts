@@ -1,7 +1,7 @@
 import { Observable } from "rxjs";
 import { StatusManager } from "./StatusManager";
 import { Signal } from "@angular/core";
-import { HttpClient, HttpResponse } from "@angular/common/http";
+import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { RoutesManager } from "./RoutesManager";
 
 export interface ResourceManagement<BaseResponseT> {
@@ -26,6 +26,8 @@ export interface ResourceManagement<BaseResponseT> {
     getRequestSettings(options: ResourceActionOptions): { url: string, params: { [param: string]: any } }
 }
 
+export type ResourceProps = ResourceManagerOptions | string;
+
 export type ResourceResponse<T = any> = Observable<HttpResponse<T>>;
 
 export type ResourceId = string | number;
@@ -47,7 +49,7 @@ export interface QueryParams {
 export interface ResourceManagerOptions {
     apiUrl?: string,
     prefix?: string,
-    idLocation?: string,
+    idLocation?: RouteIdLocation,
     httpClient?: HttpClient,
 }
 
@@ -61,4 +63,9 @@ export interface ResourceActionOptions<ResponseT = any, BodyT = ResponseT> {
     }
 }
 
-export type ResourceActionDecorator = (target: any, propertyKey: string, descriptor: PropertyDescriptor) => PropertyDescriptor;
+export type ResourceActionDecorator = (target: any, propertyKey: string, descriptor: PropertyDescriptor) => any;
+
+export interface RequestSettings {
+    url: string,
+    params: HttpParams
+}

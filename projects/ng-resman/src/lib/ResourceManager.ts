@@ -1,46 +1,55 @@
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { catchError, map, Observable } from "rxjs";
-import { ResourceManagement, ResourceActionOptions, ResourceId, ResourceResponse, RoutesOptions } from "./Models";
+import { ResourceManagement, ResourceActionOptions, ResourceId, ResourceResponse, ResourceProps, RouteIdLocation, RequestSettings } from "./Models";
 import { RoutesManager } from "./RoutesManager";
 import { StatusManager } from "./StatusManager";
 import { inject } from "@angular/core";
-import { DeleteResource, GetResource, PostResource, PutResource } from "./ResourceActionDecorator";
-
-interface RequestSettings {
-    url: string,
-    params: HttpParams
-}
+import { ResourceAction, DeleteResource, GetResource, PostResource, PutResource } from "./ResourceActionDecorator";
 
 export abstract class ResourceManager<BaseResponseT = any> implements ResourceManagement<BaseResponseT> {
     public readonly status: StatusManager = new StatusManager;
-
     public readonly http: HttpClient = inject(HttpClient);
+    public routes: RoutesManager;
 
-    public readonly routes!: RoutesManager;
+    constructor(props: ResourceProps) {
+        if (typeof props === 'string') {
+            this.routes = new RoutesManager({
+                prefix:     props ?? '',
+                idLocation: 'beforePath',
+            });
+            return;
+        }
+    
+        this.routes = new RoutesManager({
+            prefix:     props.prefix ?? '',
+            apiUrl:     props.apiUrl ?? '',
+            idLocation: props.idLocation ?? 'beforePath',
+        });
+    }
 
     @GetResource()
     list<ResponseT = BaseResponseT[]>(): ResourceResponse<ResponseT> {
-        return new Observable;
+        return new Observable<HttpResponse<ResponseT>>;
     }
 
     @GetResource()
     details<ResponseT = BaseResponseT>(id: ResourceId): ResourceResponse<ResponseT> {
-        return new Observable;
+        return new Observable<HttpResponse<ResponseT>>;
     }
 
     @PostResource()
     create<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(body: BodyT): ResourceResponse<ResponseT> {
-        return new Observable;
+        return new Observable<HttpResponse<ResponseT>>;
     }
 
     @PutResource()
     update<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(id: ResourceId, body: BodyT): ResourceResponse<ResponseT> {
-        return new Observable;
+        return new Observable<HttpResponse<ResponseT>>;
     }
 
     @DeleteResource()
     delete<ResponseT>(id: ResourceId): ResourceResponse<ResponseT> {
-        return new Observable;
+        return new Observable<HttpResponse<ResponseT>>;
     }
 
     getRequestSettings(options: ResourceActionOptions = {}): RequestSettings {

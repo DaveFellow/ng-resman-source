@@ -37,6 +37,9 @@ export class RoutesManager {
         if (this.prefix)
             urlArr.push(this.prefix);
 
+        if (!urlArr.length)
+            return '';
+
         const url: string = urlArr.reduce((a, b) => `${a}/${b}`);
 
         return `${url}/${route}`.replace(/\/$/, '');

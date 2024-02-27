@@ -1,7 +1,5 @@
-import { ResourceActionDecorator, ResourceActionOptions, ResourceManagement, ResourceResponse } from "./Models";
-import { toSignal } from "@angular/core/rxjs-interop";
+import { ResourceActionDecorator, ResourceActionOptions, ResourceResponse } from "./Models";
 import { HttpResponse } from "@angular/common/http";
-import { Observable } from "rxjs";
 import { ResourceManager } from "./ResourceManager";
 
 type ResourceActionProps = ResourceActionOptions | string;
@@ -15,15 +13,23 @@ export function ResourceAction<ResponseT = any>(options: ResourceActionOptions):
                 options.path = propertyKey;
             }
         
-            let request = getRequest<ResponseT>({
-                _class: this,
-                actionOptions: options,
-                body: options.body
-            });
+            let request;
+
+            const { url, params } = this.getRequestSettings(options);
+
+            switch(options.type) {
+                case 'post':
+                    request = this.http.post<HttpResponse<ResponseT>>(url, options.body ?? {}, { params }); break;
+                case 'put': 
+                    request = this.http.put<HttpResponse<ResponseT>>(url, options.body ?? {}, { params }); break;
+                case 'delete': 
+                    request = this.http.delete<HttpResponse<ResponseT>>(url, { params }); break;
+                default: 
+                    request = this.http.get<HttpResponse<ResponseT>>(url, { params }); break;
+            }
         
             return this.pipeRequest<ResponseT>(request);
         }
-        return descriptor;
     }
 }
 
@@ -68,22 +74,6 @@ export function DeleteResource<ResponseT = any>(props: ResourceActionProps = '')
     }
 
     return ResourceAction<ResponseT>({...props, type: 'delete'});
-}
-
-function getRequest<ResponseT>(options: {
-    _class: ResourceManager<ResponseT>,
-    actionOptions: ResourceActionOptions,
-    body?: any
-}): ResourceResponse<ResponseT> {
-    const { url, params } = options._class.getRequestSettings(options.actionOptions);
-
-    switch(options.actionOptions.type) {
-        case 'get'    : return options._class.http.get<HttpResponse<ResponseT>>(url, { params });
-        case 'post'   : return options._class.http.post<HttpResponse<ResponseT>>(url, options.body ?? {}, { params });
-        case 'put'    : return options._class.http.put<HttpResponse<ResponseT>>(url, options.body ?? {}, { params });
-        case 'delete' : return options._class.http.delete<HttpResponse<ResponseT>>(url, { params });
-        default       : return options._class.http.get<HttpResponse<ResponseT>>(url, { params });
-    }
 }
 
 function updateOptions(propertyKey: string, options: ResourceActionOptions, args: any[]): ResourceActionOptions {
