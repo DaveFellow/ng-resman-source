@@ -1,4 +1,4 @@
-import { ResourceActionDecorator, ResourceActionOptions, ResourceActionProps } from "./Models";
+import { ResourceActionDecorator, ResourceActionOptions, ResourceActionProps, ResourceActionVerb } from "./Models";
 import { HttpResponse } from "@angular/common/http";
 import { ResourceManager } from "./ResourceManager";
 
@@ -32,48 +32,39 @@ export function ResourceAction<ResponseT = any>(options: ResourceActionOptions):
 }
 
 export function GetResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    if (typeof props === 'string') {
-        return ResourceAction<ResponseT>({
-            path: props,
-            type: 'get'
-        });
-    }
-    return ResourceAction<ResponseT>({...props, type: 'get'});
+    return getConfiguredResourceAction<ResponseT>('get', props);
 }
 
 export function PostResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    if (typeof props === 'string') {
-        return ResourceAction<ResponseT>({
-            path: props,
-            type: 'post'
-        });
-    }
-
-    return ResourceAction<ResponseT>({...props, type: 'post'});
+    return getConfiguredResourceAction<ResponseT>('post', props);
 }
 
 export function PutResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    if (typeof props === 'string') {
-        return ResourceAction<ResponseT>({
-            path: props,
-            type: 'put'
-        });
-    }
-
-    return ResourceAction<ResponseT>({...props, type: 'put'});
+    return getConfiguredResourceAction<ResponseT>('put', props);
 }
 
 export function DeleteResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    if (typeof props === 'string') {
-        return ResourceAction<ResponseT>({
-            path: props,
-            type: 'delete'
-        });
-    }
-
-    return ResourceAction<ResponseT>({...props, type: 'delete'});
+    return getConfiguredResourceAction<ResponseT>('delete', props);
 }
 
+/**
+ * Verificar si 'props' es iterable
+ */
+function getConfiguredResourceAction<ResponseT>(type: ResourceActionVerb, props: ResourceActionProps): ResourceActionDecorator {
+    return typeof props === 'string'
+        ? ResourceAction<ResponseT>({ path: props, type })
+        : ResourceAction<ResponseT>({...props, type});
+}
+
+/**
+ * Debe añadirse la posibilidad aquí de leer una propiedad en 'options' que define cuál de los
+ * argumentos es 'id' y cuál es 'body', en caso de haberlos.
+ * 
+ * Eso eliminaría la necesidad de este switch con opciones fijas.
+ * 
+ * También debe verificar si 'options' es iterable, en ese caso buscará los strings 'id' y 'body'
+ * y tomará sus índices para buscar el argumento correspondiente a cada uno en 'args'
+ */
 function updateOptions(action: string, options: ResourceActionOptions, args: any[]): ResourceActionOptions {
     if (!args.length)
         return options;

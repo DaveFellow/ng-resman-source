@@ -48,8 +48,10 @@ export interface UrlParams {
     [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
 }
 
+export type ResourceActionVerb = 'get' | 'post' | 'put' | 'delete';
+
 export interface ResourceActionOptions<ResponseT = any, BodyT = ResponseT> extends RouteOptions {
-    type?: 'get' | 'post' | 'put' | 'delete',
+    type?: ResourceActionVerb,
     path?: string,
     id?: ResourceId,
     body?: BodyT,
@@ -58,7 +60,7 @@ export interface ResourceActionOptions<ResponseT = any, BodyT = ResponseT> exten
 
 export type ResourceActionDecorator = (target: any, propertyKey: string, descriptor: PropertyDescriptor) => any;
 
-export type ResourceActionProps = ResourceActionOptions | string;
+export type ResourceActionProps = ResourceActionOptions | string | ['id'?, 'body'?];
 
 export interface RequestSettings {
     url: string,
