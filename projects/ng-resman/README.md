@@ -113,10 +113,10 @@ This method will mostly return an empty string, unless a path per action is spec
 The *.setPath()* method will accept the name of an action as first parameter and the new path as second parameter path added to each call made to that action in the resource service.
 
 ### Routes options
-The *routes* object can be configured by passing a *RoutesOptions* object as a third parameter in the resource service constructor:
+The *routes* object can be configured by passing a *RouteOptions* object as a third parameter in the resource service constructor:
 
     constructor(override http: HttpClient) {
-        const options: RoutesOptions = {
+        const options: RouteOptions = {
             apiUrl: 'http://localhost:8000'
             idLocation: 'afterPath'
         }

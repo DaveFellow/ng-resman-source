@@ -1,64 +1,69 @@
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
 import { catchError, map, Observable } from "rxjs";
-import { ResourceManagement, ResourceActionOptions, ResourceId, ResourceResponse, ResourceProps, RouteIdLocation, RequestSettings } from "./Models";
-import { RoutesManager } from "./RoutesManager";
+import { ResourceManagement, ResourceActionOptions, ResourceId, ResourceResponse, RouteIdLocation, RequestSettings, UrlParams } from "./Models";
+import { buildUrl } from "./Utils";
 import { StatusManager } from "./StatusManager";
 import { inject } from "@angular/core";
-import { ResourceAction, DeleteResource, GetResource, PostResource, PutResource } from "./ResourceActionDecorator";
+import { DeleteResource, GetResource, PostResource, PutResource } from "./ResourceActionDecorator";
 
 export abstract class ResourceManager<BaseResponseT = any> implements ResourceManagement<BaseResponseT> {
     public readonly status: StatusManager = new StatusManager;
     public readonly http: HttpClient = inject(HttpClient);
-    public routes: RoutesManager;
 
-    constructor(props: ResourceProps) {
-        if (typeof props === 'string') {
-            this.routes = new RoutesManager({
-                prefix:     props ?? '',
-                idLocation: 'beforePath',
-            });
-            return;
+    public apiUrl: string = '';
+    public prefix: string = '';
+    public idLocation: RouteIdLocation = 'beforePath';
+
+    protected get routeOptions() {
+        return {
+            prefix: this.prefix,
+            apiUrl: this.apiUrl,
+            idLocation: this.idLocation
         }
-    
-        this.routes = new RoutesManager({
-            prefix:     props.prefix ?? '',
-            apiUrl:     props.apiUrl ?? '',
-            idLocation: props.idLocation ?? 'beforePath',
-        });
+    }
+
+    protected get route() {
+        return buildUrl(this.routeOptions);
     }
 
     @GetResource()
-    list<ResponseT = BaseResponseT[]>(): ResourceResponse<ResponseT> {
-        return new Observable<HttpResponse<ResponseT>>;
+    list<ResponseT = BaseResponseT[]>(params?: UrlParams): ResourceResponse<ResponseT> {
+        return new Observable<HttpResponse<ResponseT>>();
     }
 
     @GetResource()
-    details<ResponseT = BaseResponseT>(id: ResourceId): ResourceResponse<ResponseT> {
-        return new Observable<HttpResponse<ResponseT>>;
+    details<ResponseT = BaseResponseT>(id: ResourceId, params?: UrlParams): ResourceResponse<ResponseT> {
+        return new Observable<HttpResponse<ResponseT>>();
     }
 
     @PostResource()
-    create<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(body: BodyT): ResourceResponse<ResponseT> {
-        return new Observable<HttpResponse<ResponseT>>;
+    create<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(body: BodyT, params?: UrlParams): ResourceResponse<ResponseT> {
+        return new Observable<HttpResponse<ResponseT>>();
     }
 
     @PutResource()
-    update<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(id: ResourceId, body: BodyT): ResourceResponse<ResponseT> {
-        return new Observable<HttpResponse<ResponseT>>;
+    update<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(id: ResourceId, body: BodyT, params?: UrlParams): ResourceResponse<ResponseT> {
+        return new Observable<HttpResponse<ResponseT>>();
     }
 
     @DeleteResource()
-    delete<ResponseT>(id: ResourceId): ResourceResponse<ResponseT> {
-        return new Observable<HttpResponse<ResponseT>>;
+    delete<ResponseT>(id: ResourceId, params?: UrlParams): ResourceResponse<ResponseT> {
+        return new Observable<HttpResponse<ResponseT>>();
     }
 
     getRequestSettings(options: ResourceActionOptions = {}): RequestSettings {
-        const { path, params, id } = options;
+        const {
+            path,
+            params,
+            id,
+            prefix = this.prefix,
+            apiUrl = this.apiUrl,
+            idLocation = this.idLocation
+        } = options;
 
-        const url: string = this.routes.build(path ?? '', id);
-        const httpParams: HttpParams = new HttpParams({ fromObject: params });
+        const url: string = buildUrl({ id, path, prefix, apiUrl, idLocation });
 
-        return { url, params: httpParams };
+        return { url, params: new HttpParams({ fromObject: params }) };
     }
 
     pipeRequest<ResponseT = BaseResponseT>(request: ResourceResponse<ResponseT>, actionName: string = ''): ResourceResponse<ResponseT> {

@@ -1,32 +1,28 @@
 import { Observable } from "rxjs";
 import { StatusManager } from "./StatusManager";
-import { Signal } from "@angular/core";
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
-import { RoutesManager } from "./RoutesManager";
 
 export interface ResourceManagement<BaseResponseT> {
-    status: StatusManager;
-
     http: HttpClient;
+    status: StatusManager;
+    apiUrl: string,
+    prefix: string,
+    idLocation: RouteIdLocation,
 
-    routes: RoutesManager;
+    list<ResponseT = BaseResponseT[]>(params: UrlParams): ResourceResponse<ResponseT>;
 
-    list<ResponseT = BaseResponseT[]>(): ResourceResponse<ResponseT>;
+    details<ResponseT = BaseResponseT>(id: ResourceId, params: UrlParams):  ResourceResponse<ResponseT>;
 
-    details<ResponseT = BaseResponseT>(id: ResourceId):  ResourceResponse<ResponseT>;
+    create<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(body: BodyT, params: UrlParams): ResourceResponse<ResponseT>;
 
-    create<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(body: BodyT): ResourceResponse<ResponseT>;
+    update<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(id: ResourceId, body: BodyT, params: UrlParams): ResourceResponse<ResponseT>;
 
-    update<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(id: ResourceId, body: BodyT): ResourceResponse<ResponseT>;
-
-    delete<ResponseT = BaseResponseT>(id: ResourceId): ResourceResponse<ResponseT>;
+    delete<ResponseT = BaseResponseT>(id: ResourceId, params: UrlParams): ResourceResponse<ResponseT>;
 
     pipeRequest<ResponseT = BaseResponseT>(request: ResourceResponse<ResponseT>): ResourceResponse<ResponseT>;
 
     getRequestSettings(options: ResourceActionOptions): { url: string, params: { [param: string]: any } }
 }
-
-export type ResourceProps = ResourceManagerOptions | string;
 
 export type ResourceResponse<T = any> = Observable<HttpResponse<T>>;
 
@@ -34,7 +30,9 @@ export type ResourceId = string | number;
 
 export type Status = 'idle' | 'loading' | 'success' | 'error';
 
-export interface RoutesOptions {
+export interface RouteOptions {
+    id?: ResourceId,
+    path?: string,
     prefix?: string,
     apiUrl?: string,
     idLocation?: RouteIdLocation
@@ -46,24 +44,21 @@ export interface QueryParams {
     [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
 }
 
-export interface ResourceManagerOptions {
-    apiUrl?: string,
-    prefix?: string,
-    idLocation?: RouteIdLocation,
-    httpClient?: HttpClient,
+export interface UrlParams {
+    [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
 }
 
-export interface ResourceActionOptions<ResponseT = any, BodyT = ResponseT> {
+export interface ResourceActionOptions<ResponseT = any, BodyT = ResponseT> extends RouteOptions {
     type?: 'get' | 'post' | 'put' | 'delete',
     path?: string,
     id?: ResourceId,
     body?: BodyT,
-    params?: {
-        [param: string]: any
-    }
+    params?: UrlParams
 }
 
 export type ResourceActionDecorator = (target: any, propertyKey: string, descriptor: PropertyDescriptor) => any;
+
+export type ResourceActionProps = ResourceActionOptions | string;
 
 export interface RequestSettings {
     url: string,

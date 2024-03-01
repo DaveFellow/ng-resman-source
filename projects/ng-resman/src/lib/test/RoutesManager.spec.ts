@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Status } from '../Models';
-import { RoutesManager } from '../RoutesManager';
+import { RoutesManager } from '../Utils';
 
 const apiUrl: string = 'http://test';
 

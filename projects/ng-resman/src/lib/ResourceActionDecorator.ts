@@ -1,8 +1,6 @@
-import { ResourceActionDecorator, ResourceActionOptions, ResourceResponse } from "./Models";
+import { ResourceActionDecorator, ResourceActionOptions, ResourceActionProps } from "./Models";
 import { HttpResponse } from "@angular/common/http";
 import { ResourceManager } from "./ResourceManager";
-
-type ResourceActionProps = ResourceActionOptions | string;
 
 export function ResourceAction<ResponseT = any>(options: ResourceActionOptions): ResourceActionDecorator {
     return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
@@ -76,27 +74,32 @@ export function DeleteResource<ResponseT = any>(props: ResourceActionProps = '')
     return ResourceAction<ResponseT>({...props, type: 'delete'});
 }
 
-function updateOptions(propertyKey: string, options: ResourceActionOptions, args: any[]): ResourceActionOptions {
+function updateOptions(action: string, options: ResourceActionOptions, args: any[]): ResourceActionOptions {
     if (!args.length)
         return options;
 
-    switch(propertyKey) {
+    switch(action) {
+        case 'list':
+            options.params = args[0];
+            break;
         case 'details':
             options.id = args[0];
+            options.params = args[1];
             break;
         case 'create':
             options.body = args[0];
+            options.params = args[1];
             break;
         case 'update':
             options.id = args[0];
             options.body = args[1];
+            options.params = args[2];
             break;
         case 'delete':
             options.id = args[0];
+            options.params = args[1];
             break;
         default:
-            const optionsProps = [ 'type', 'path', 'id', 'idLocation', 'body', 'params' ];
-
             for (let i = 0; i < Math.min(args.length, 2); i++) {
                 if (typeof args[i] !== 'object') continue;
                 options = {...options, ...args[i]};
