@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ResourceActionOptions, ResourceManager, RouteIdLocation } from 'dist/ng-resman';
-import { GetResource } from 'projects/ng-resman/src/lib/ResourceActionDecorator';
+import { GetResource, ResourceActionOptions, ResourceManager } from 'dist/ng-resman';
 import { Observable } from 'rxjs';
 
 interface PokemonData {
