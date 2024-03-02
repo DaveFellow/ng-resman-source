@@ -62,7 +62,6 @@ export abstract class ResourceManager<BaseResponseT = any> implements ResourceMa
         } = options;
 
         const url: string = buildUrl({ id, path, prefix, apiUrl, idLocation });
-console.log(url);
 
         return { url, params: new HttpParams({ fromObject: params }) };
     }

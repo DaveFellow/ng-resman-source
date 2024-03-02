@@ -12,8 +12,8 @@ interface PokemonData {
 export class TestServService extends ResourceManager<PokemonData> {
   override prefix = 'pokemon';
 
-  @GetResource()
-  public getPokemon(options: ResourceActionOptions) {
+  @GetResource('', ['id'])
+  public getPokemon(id: string) {
     return new Observable<PokemonData>();
   }
 }
