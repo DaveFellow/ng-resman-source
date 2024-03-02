@@ -1,4 +1,4 @@
-import { ResourceActionDecorator, ResourceActionOptions, ResourceActionProps, ResourceActionVerb } from "./Models";
+import { ResourceActionArgsSetup, ResourceActionDecorator, ResourceActionOptions, ResourceActionProps, ResourceActionVerb } from "./Models";
 import { HttpResponse } from "@angular/common/http";
 import { ResourceManager } from "./ResourceManager";
 
@@ -31,71 +31,84 @@ export function ResourceAction<ResponseT = any>(options: ResourceActionOptions):
     }
 }
 
-export function GetResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    return getConfiguredResourceAction<ResponseT>('get', props);
+export function GetResource<ResponseT = any>(propsPathOrArgsSetup?: ResourceActionProps, argsSetup?: ResourceActionArgsSetup): ResourceActionDecorator {
+    return getConfiguredResourceAction<ResponseT>('get', propsPathOrArgsSetup, argsSetup);
 }
 
-export function PostResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    return getConfiguredResourceAction<ResponseT>('post', props);
+export function PostResource<ResponseT = any>(propsPathOrArgsSetup?: ResourceActionProps, argsSetup?: ResourceActionArgsSetup): ResourceActionDecorator {
+    return getConfiguredResourceAction<ResponseT>('post', propsPathOrArgsSetup, argsSetup);
 }
 
-export function PutResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    return getConfiguredResourceAction<ResponseT>('put', props);
+export function PutResource<ResponseT = any>(propsPathOrArgsSetup?: ResourceActionProps, argsSetup?: ResourceActionArgsSetup): ResourceActionDecorator {
+    return getConfiguredResourceAction<ResponseT>('put', propsPathOrArgsSetup, argsSetup);
 }
 
-export function DeleteResource<ResponseT = any>(props: ResourceActionProps = ''): ResourceActionDecorator {
-    return getConfiguredResourceAction<ResponseT>('delete', props);
+export function DeleteResource<ResponseT = any>(propsPathOrArgsSetup?: ResourceActionProps, argsSetup?: ResourceActionArgsSetup): ResourceActionDecorator {
+    return getConfiguredResourceAction<ResponseT>('delete', propsPathOrArgsSetup, argsSetup);
 }
 
-/**
- * Verificar si 'props' es iterable
- */
-function getConfiguredResourceAction<ResponseT>(type: ResourceActionVerb, props: ResourceActionProps): ResourceActionDecorator {
-    return typeof props === 'string'
-        ? ResourceAction<ResponseT>({ path: props, type })
-        : ResourceAction<ResponseT>({...props, type});
+function getConfiguredResourceAction<ResponseT>(type: ResourceActionVerb, props: ResourceActionProps, argsSetup: ResourceActionArgsSetup = []): ResourceActionDecorator {
+    if (Array.isArray(props))
+        return ResourceAction<ResponseT>({argsSetup: props, type});
+    
+    if (typeof props === 'string')
+        return ResourceAction<ResponseT>({ path: props as string, type, argsSetup })
+
+    if (!props)
+        return ResourceAction<ResponseT>({ type, argsSetup })
+
+    return ResourceAction<ResponseT>({...props, type, argsSetup: props.argsSetup ?? []});
 }
 
-/**
- * Debe añadirse la posibilidad aquí de leer una propiedad en 'options' que define cuál de los
- * argumentos es 'id' y cuál es 'body', en caso de haberlos.
- * 
- * Eso eliminaría la necesidad de este switch con opciones fijas.
- * 
- * También debe verificar si 'options' es iterable, en ese caso buscará los strings 'id' y 'body'
- * y tomará sus índices para buscar el argumento correspondiente a cada uno en 'args'
- */
 function updateOptions(action: string, options: ResourceActionOptions, args: any[]): ResourceActionOptions {
     if (!args.length)
         return options;
 
-    switch(action) {
-        case 'list':
-            options.params = args[0];
-            break;
-        case 'details':
-            options.id = args[0];
-            options.params = args[1];
-            break;
-        case 'create':
-            options.body = args[0];
-            options.params = args[1];
-            break;
-        case 'update':
-            options.id = args[0];
-            options.body = args[1];
-            options.params = args[2];
-            break;
-        case 'delete':
-            options.id = args[0];
-            options.params = args[1];
-            break;
-        default:
-            for (let i = 0; i < Math.min(args.length, 2); i++) {
-                if (typeof args[i] !== 'object') continue;
-                options = {...options, ...args[i]};
-                break;
-            }
+    const argsSetup = options.argsSetup ?? [];
+
+    options.params = args[argsSetup.length];
+
+    if (options.params && typeof options.params !== 'object') {
+        options.params = {};
+        console.warn(`Argument corresponding to params in request from method '${action}' must be type a literal object`);
     }
+
+    if (!argsSetup.length)
+        return options;
+    
+    const indexes = {
+        id: -1,
+        body: -1
+    }
+
+    for (let i = 0; i < Math.min(argsSetup.length, 2); i++) {
+        indexes[argsSetup[i]] = i;
+    }
+
+    options.id = validateId(args[indexes.id], action);
+    options.body = validateBody(args[indexes.body], action);
+
     return options;
+}
+
+function validateBody(body: any[], action: string) {
+    if (!body)
+        return undefined;
+
+    if (typeof body !== 'object') {
+        console.warn(`Argument corresponding to 'body' in request from method '${action}' must be a literal object`);
+        return {};
+    }
+    return body;
+}
+
+function validateId(id: any, action: string) {
+    if (!id)
+        return undefined;
+
+    if (typeof id !== 'string' && typeof id !== 'number') {
+        console.warn(`Argument corresponding to 'body' in request from method '${action}' must be a literal object`);
+        return undefined;
+    }
+    return id;
 }

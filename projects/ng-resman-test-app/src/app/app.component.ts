@@ -15,11 +15,11 @@ export class AppComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.testServ.list().subscribe();
-    this.testServ.details('ditto').subscribe();
-    this.testServ.create({name: 'tangela', number: 123}).subscribe();
-    this.testServ.update('caterpie', {name: 'Butterfree', number: 14}).subscribe();
-    this.testServ.delete('ditto').subscribe();
-    // this.testServ.getPokemon({id: 'pikachu'}).subscribe();
+    // this.testServ.list().subscribe();
+    // this.testServ.details('ditto').subscribe();
+    // this.testServ.create({name: 'tangela', number: 123}).subscribe();
+    // this.testServ.update('caterpie', {name: 'Butterfree', number: 14}).subscribe();
+    // this.testServ.delete('ditto').subscribe();
+    this.testServ.getPokemon({id: 'pikachu'}).subscribe();
   }
 }

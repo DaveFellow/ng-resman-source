@@ -26,27 +26,27 @@ export abstract class ResourceManager<BaseResponseT = any> implements ResourceMa
         return buildUrl(this.routeOptions);
     }
 
-    @GetResource()
+    @GetResource('')
     list<ResponseT = BaseResponseT[]>(params?: UrlParams): ResourceResponse<ResponseT> {
         return new Observable<HttpResponse<ResponseT>>();
     }
 
-    @GetResource()
+    @GetResource('', ['id'])
     details<ResponseT = BaseResponseT>(id: ResourceId, params?: UrlParams): ResourceResponse<ResponseT> {
         return new Observable<HttpResponse<ResponseT>>();
     }
 
-    @PostResource()
+    @PostResource('', ['body'])
     create<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(body: BodyT, params?: UrlParams): ResourceResponse<ResponseT> {
         return new Observable<HttpResponse<ResponseT>>();
     }
 
-    @PutResource()
+    @PutResource('', ['id', 'body'])
     update<ResponseT = BaseResponseT, BodyT = Partial<ResponseT>>(id: ResourceId, body: BodyT, params?: UrlParams): ResourceResponse<ResponseT> {
         return new Observable<HttpResponse<ResponseT>>();
     }
 
-    @DeleteResource()
+    @DeleteResource('', ['id'])
     delete<ResponseT>(id: ResourceId, params?: UrlParams): ResourceResponse<ResponseT> {
         return new Observable<HttpResponse<ResponseT>>();
     }
@@ -62,6 +62,7 @@ export abstract class ResourceManager<BaseResponseT = any> implements ResourceMa
         } = options;
 
         const url: string = buildUrl({ id, path, prefix, apiUrl, idLocation });
+console.log(url);
 
         return { url, params: new HttpParams({ fromObject: params }) };
     }

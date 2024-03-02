@@ -50,17 +50,19 @@ export interface UrlParams {
 
 export type ResourceActionVerb = 'get' | 'post' | 'put' | 'delete';
 
+export type ResourceActionArgsSetup = ('id' | 'body')[];
 export interface ResourceActionOptions<ResponseT = any, BodyT = ResponseT> extends RouteOptions {
     type?: ResourceActionVerb,
     path?: string,
     id?: ResourceId,
     body?: BodyT,
-    params?: UrlParams
+    params?: UrlParams,
+    argsSetup?: ResourceActionArgsSetup
 }
 
 export type ResourceActionDecorator = (target: any, propertyKey: string, descriptor: PropertyDescriptor) => any;
 
-export type ResourceActionProps = ResourceActionOptions | string | ['id'?, 'body'?];
+export type ResourceActionProps = ResourceActionOptions | string | ResourceActionArgsSetup | undefined;
 
 export interface RequestSettings {
     url: string,
