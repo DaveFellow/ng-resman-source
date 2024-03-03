@@ -13,7 +13,9 @@ A quick summary:
 
 - Now HttpClient depency is set with the *inject()* method in the base class
 
-- Maybe more that I cannot remember
+- Cache system to store latest sucessful response result of each action
+
+- Support for global side effects setup for each action
 
 # Resource Manager for Angular
 This is an API resource management library for Angular to make working with APIs more straightforward and less verbose.
@@ -268,14 +270,14 @@ The *status* object will manage the life cycle of each action request.
 
     this.resourceService.status
 
-Each action has its own status management which can be accessed by using the *.status* property on the resource service. For example:
+Each action has its own status management which can be accessed by using the *status* property on the resource service. For example:
 
     this.resourceService.status.get('list')
     this.resourceService.status.set('create', 'success')
 
-The *.get()* and *.set()* methods are basically getter and setter for each action status, in which are include all the basic actions listed above, though you can also add your own action status if necessary.
+The *get* and *set* methods are basically getter and setter for each action status, in which are include all the basic actions listed above, though you can also add your own action status if necessary.
 
-The *.get()* method will return a *Status* type value, which can have one of the following string values:
+The *get* method will return a *Status* type value, which can have one of the following string values:
 - idle
 - loading
 - success
@@ -290,7 +292,7 @@ There are other methods that will check whether an action is in a specific statu
     .status.isSuccess('details')
     .status.isError('destroy')
 
-The *.set()* method will accept the name of an action as first parameter and the status as second parameter, though there are shortcuts methods for setting specific status per action, these only accept the name of the action as a parameter:
+The *.set* method will accept the name of an action as first parameter and the status as second parameter, though there are shortcuts methods for setting specific status per action, these only accept the name of the action as a parameter:
 
     .status.setIdle('list')
     .status.setLoading('create)
@@ -369,3 +371,7 @@ You can comfortably do so with the *setActionDefaults* method. Do it in the serv
         super();
         this.setActionDefaults('release-payment', []);
     }
+
+This sets the action status to *'idle'* and, if the second argument is present, also sets a default cache value.
+
+This method evaluates if a the status or the cached has changed before performing any action, to prevent you from accidentally reset an action state after the service was injected.
