@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { TestServService } from './providers/test-serv.service';
 import { ResourceManager } from 'ng-resman';
 
+type PokemonData = {}
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -11,15 +12,21 @@ import { ResourceManager } from 'ng-resman';
 export class AppComponent implements OnInit {
   title = 'ng-resman-test-app';
 
-  constructor(public testServ: TestServService) {
+  get listData() {
+    return this.testServ.cached<PokemonData[]>('list');
   }
 
+  constructor(public testServ: TestServService) {}
+
   ngOnInit(): void {
-    this.testServ.list().subscribe();
+    console.log('CACHED LIST BEFORE: ', this.listData);
+    this.testServ.list().subscribe(r => {
+      console.log('CACHED LIST: ', this.listData?.getValue());
+    });
     this.testServ.details('ditto').subscribe();
-    this.testServ.create({name: 'tangela', number: 123}).subscribe();
-    this.testServ.update('caterpie', {name: 'Butterfree', number: 14}).subscribe();
-    this.testServ.delete('ditto').subscribe();
-    this.testServ.getPokemon('pikachu').subscribe();
+    // this.testServ.create({name: 'tangela', number: 123}).subscribe();
+    // this.testServ.update('caterpie', {name: 'Butterfree', number: 14}).subscribe();
+    // this.testServ.delete('ditto').subscribe();
+    this.testServ.getPokemon('pikachu').subscribe();    
   }
 }

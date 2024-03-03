@@ -1,20 +1,24 @@
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
-import { catchError, map, Observable } from "rxjs";
-import { ResourceManagement, ResourceActionOptions, ResourceId, ResourceResponse, RouteIdLocation, RequestSettings, UrlParams } from "./Models";
+import { BehaviorSubject, catchError, map, Observable, OperatorFunction } from "rxjs";
+import { ResourceManagement, ResourceActionOptions, ResourceId, ResourceResponse, RouteIdLocation, RequestSettings, UrlParams, ResourceCache, ResourceEffects, RouteOptions } from "./Models";
 import { buildUrl } from "./Utils";
 import { StatusManager } from "./StatusManager";
-import { inject } from "@angular/core";
+import { inject, signal } from "@angular/core";
 import { DeleteResource, GetResource, PostResource, PutResource } from "./ResourceActionDecorator";
 
 export abstract class ResourceManager<BaseResponseT = any> implements ResourceManagement<BaseResponseT> {
     public readonly status: StatusManager = new StatusManager;
     public readonly http: HttpClient = inject(HttpClient);
-
+    
     public apiUrl: string = '';
     public prefix: string = '';
     public idLocation: RouteIdLocation = 'beforePath';
+    public effects: ResourceEffects = {}
+    
+    private cache: ResourceCache = {}
+    public storeInCache: boolean = true;
 
-    protected get routeOptions() {
+    protected get routeOptions(): RouteOptions {
         return {
             prefix: this.prefix,
             apiUrl: this.apiUrl,
@@ -66,10 +70,30 @@ export abstract class ResourceManager<BaseResponseT = any> implements ResourceMa
         return { url, params: new HttpParams({ fromObject: params }) };
     }
 
+    private setCached<T = any>(actionName: string, data: T): void {
+        if (!this.storeInCache) return;
+        const cachedData = this.cached<T>(actionName);
+        if (cachedData) {
+            cachedData.next(data);
+            return;
+        }
+        this.cache[actionName] = new BehaviorSubject<T>(data);
+    } 
+
+    cached<T = unknown>(actionName: string): BehaviorSubject<T> | undefined {
+        return this.cache[actionName] as BehaviorSubject<T>;
+    }
+
+    setActionDefaults(actionName: string, initialCachedData?: any): void {
+        this.status.setIdle(actionName);
+        this.setCached(actionName, initialCachedData);
+    }
+
     pipeRequest<ResponseT = BaseResponseT>(request: ResourceResponse<ResponseT>, actionName: string = ''): ResourceResponse<ResponseT> {
         this.status.setLoading(actionName);
+        const effects = (this.effects[actionName] ?? []) as [];
 
-        return request.pipe(
+        const pipedRequest = request.pipe(
             map((response) => {
                 this.status.setSuccess(actionName);
                 return response;
@@ -77,7 +101,15 @@ export abstract class ResourceManager<BaseResponseT = any> implements ResourceMa
             catchError((err) => {
                 this.status.setError(actionName);
                 throw err;
-            })
+            }),
+            ...effects
         );
+
+        return pipedRequest.pipe(
+            map((result) => {
+                this.setCached(actionName, result)
+                return result;
+            })
+        )
     }
 }

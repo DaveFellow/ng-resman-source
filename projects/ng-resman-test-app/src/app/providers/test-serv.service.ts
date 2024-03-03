@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { GetResource, ResourceActionOptions, ResourceManager } from 'dist/ng-resman';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 
 interface PokemonData {
   [key: string]: any
@@ -11,6 +11,18 @@ interface PokemonData {
 })
 export class TestServService extends ResourceManager<PokemonData> {
   override readonly prefix = 'pokemon';
+
+  // override storeInCache = false;
+
+  override readonly effects = {
+    list: [
+      map((a: any) => a.results)
+    ],
+    getPokemon: [map(a => {
+      console.log('side effect for GET POKEMON');
+      return a;
+    })]
+  }
 
   @GetResource('', ['id'])
   public getPokemon(id: string) {

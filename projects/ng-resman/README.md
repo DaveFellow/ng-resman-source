@@ -104,52 +104,6 @@ Bellow is an example of how the final URL looks like, it includes all the previo
 - {apiUrl}{prefix}/{id}/{path}
 - {apiUrl}{prefix}/{path}/{id} <-- If idLocation is set to 'afterPath'. More Below.
 
-## Status
-The *status* object will manage the life cycle of each action request.
-
-    this.resourceService.status
-
-Each action has its own status management which can be accessed by using the *.status* property on the resource service. For example:
-
-    this.resourceService.status.get('list')
-    this.resourceService.status.set('create', 'success')
-
-The *.get()* and *.set()* methods are basically getter and setter for each action status, in which are include all the basic actions listed above, though you can also add your own action status if necessary.
-
-The *.get()* method will return a *Status* type value, which can have one of the following string values:
-- idle
-- loading
-- success
-- error
-
-The status of each of the built-in actions is automatically updated during the request process and can be used in your controllers to perform instructions depending on the life cycle moment of each request.
-
-There are other methods that will check whether an action is in a specific status or not, each accept the name of the action as a parameter (put as an example bellow):
-
-    .status.isIdle('list')
-    .status.isLoading('create')
-    .status.isSuccess('details')
-    .status.isError('destroy')
-
-The *.set()* method will accept the name of an action as first parameter and the status as second parameter, though there are shortcuts methods for setting specific status per action, these only accept the name of the action as a parameter:
-
-    .status.setIdle('list')
-    .status.setLoading('create)
-    .status.setSuccess('details')
-    .status.setError('destroy')
-
-Arbitrary action names can also be set as a parameter, in that case an status with that name will be created. For example, if we set:
-
-    .status.setLoading('customAction')
-
-Then we can do:
-
-    .status.get('customAction')
-
-And it will return 'loading' as a value.
-
-``DISCLAIMER: The *status* object doesn't contain the response's state/data of each request, since that should be handled at the developer discretion. Its only purpose is to serve as an indication for the life cycle moment of each request.``
-
 ## Custom Resource Actions
 Many times we want to make custom actions outside of the built-in ones (list, create, etc.) and also keep the routes building and status management of the resource manager, in that case we can create a method that returns an Observable, decorated with any of the Resource Action Decorators depending on your need:
 
@@ -309,10 +263,110 @@ If you still want the benefits of an abbreviated declaration but need the benefi
         return new Observable<Order[]>()
     }
 
+## Status
+The *status* object will manage the life cycle of each action request.
 
-### Final consideration
-Remember to set an idle status to any custom action in the *constructor* or in any lifecycle method as a good practice, so we avoid having a *null* status whenever we want to check for its value before the any subscription is done:
+    this.resourceService.status
 
-    constructor() { // Or ngOnInit, ngAfterViewInit, etc.
-        this.status.setIdle('release-payment')
+Each action has its own status management which can be accessed by using the *.status* property on the resource service. For example:
+
+    this.resourceService.status.get('list')
+    this.resourceService.status.set('create', 'success')
+
+The *.get()* and *.set()* methods are basically getter and setter for each action status, in which are include all the basic actions listed above, though you can also add your own action status if necessary.
+
+The *.get()* method will return a *Status* type value, which can have one of the following string values:
+- idle
+- loading
+- success
+- error
+
+The status of each of the built-in actions is automatically updated during the request process and can be used in your controllers to perform instructions depending on the life cycle moment of each request.
+
+There are other methods that will check whether an action is in a specific status or not, each accept the name of the action as a parameter (put as an example bellow):
+
+    .status.isIdle('list')
+    .status.isLoading('create')
+    .status.isSuccess('details')
+    .status.isError('destroy')
+
+The *.set()* method will accept the name of an action as first parameter and the status as second parameter, though there are shortcuts methods for setting specific status per action, these only accept the name of the action as a parameter:
+
+    .status.setIdle('list')
+    .status.setLoading('create)
+    .status.setSuccess('details')
+    .status.setError('destroy')
+
+Arbitrary action names can also be set as a parameter, in that case an status with that name will be created. For example, if we set:
+
+    .status.setLoading('customAction')
+
+Then we can do:
+
+    .status.get('customAction')
+
+And it will return 'loading' as a value.
+
+``DISCLAIMER: The *status* object doesn't contain the response's state/data of each request, since that should be handled at the developer discretion. Its only purpose is to serve as an indication for the life cycle moment of each request.``
+
+## Side Effects
+As sometimes your data isn't exactly coming in the most convenient way, instead of having to pipe your actions everywhere you use it (or worse, pass a callback to the *subscribe* method), you can globally apply side effects to each desired action.
+
+You do so by overriding the *effects* property and passing an array of OperatorFunction (map, switchMap, catchError, etc.):
+
+    override readonly effects = {
+        list: [
+            map((response: CustomType) => response.results)
+        ],
+        savePokemonInOaksPC: [map((response: StandardMessage) => {
+            console.log('Saved on your PC');
+            return response;
+        })]
     }
+
+In those cases, whenever you subscribe to the *list* action and get successful response, you won't get the full data that's coming from your API but only the "results* object of it. In the case of the *savePokemonInOaksPC* action, you should log a string to your console.
+
+The advantage of this approach instead of individually piping each action observable is that it's globally applied to your action calls everywhere, and of course, you can still pipe them in your components or wherever you use them as you need.
+
+## Cache
+Every action, by default, cache their latest successful response data, so you can get access to it at any given moment without having to worry about manually store it in your components or in any other service member.
+
+You can access it by using the *cached* method and passing the action (method) name:
+
+    this.testServ.cached('list')
+    this.testServ.cached('create')
+    this.testServ.cached('customAction')
+
+This returns a *BehaviorSubject* object typed as *unknown*, so make sure to pass a generic type argument to *cached* method in order to have the proper type for its data:
+
+    this.testServ.cached<MappedList>('getMappedList')
+
+You can then use *getValue* method in order to get the data in an imperative context:
+
+    this.mappedList = this.testServ.cached<MappedList>('getMappedList')?.getValue()
+
+Or subscribe to it or use *async pipe* in the template, do as you need.
+
+Also, the data is stored after the side *effects* are applied.
+
+### Disable cached data
+If for whatever reason you don't want your successful responses data to be cached in your service, you can always override the *storeInCache* property:
+
+    override readonly storeInCache = false;
+
+This will disable the caching so now when you try to access any cached data from that resource manager service, you'll get an *undefined* data.
+
+``DISCLAIMER: The cached data is *NOT* a state management system, it should be considered read-only considering it's prone to change on every sucessful request. If you intend to manipulate the data, store it in another class property so you'll have full control``
+
+## Defaults settings for custom actions
+You should set an initial idle status to any custom action, so we avoid having a *null* status whenever we want to check for its value before the any subscription is done.
+
+Also, sometimes you need a default cached data to work with while you wait for your first action request (like an empty array in your list).
+
+You can comfortably do so with the *setActionDefaults* method. Do it in the service *constructor* as a good practice, so your resource manager is ready before your component is initialized: 
+
+    constructor() {
+        this.setActionDefaults('release-payment', []);
+    }
+
+``DISCLAIMER: Don't use *setActionDefaults* method after this since it would overwrite your cached data in an unwanted way and cause undesired side effects to your application's flow.``

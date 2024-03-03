@@ -1,13 +1,15 @@
-import { Observable } from "rxjs";
+import { BehaviorSubject, Observable, OperatorFunction } from "rxjs";
 import { StatusManager } from "./StatusManager";
 import { HttpClient, HttpParams, HttpResponse } from "@angular/common/http";
+import { Signal } from "@angular/core";
 
 export interface ResourceManagement<BaseResponseT> {
     http: HttpClient;
     status: StatusManager;
-    apiUrl: string,
-    prefix: string,
-    idLocation: RouteIdLocation,
+    apiUrl: string;
+    prefix: string;
+    idLocation: RouteIdLocation;
+    storeInCache: boolean;
 
     list<ResponseT = BaseResponseT[]>(params: UrlParams): ResourceResponse<ResponseT>;
 
@@ -21,7 +23,7 @@ export interface ResourceManagement<BaseResponseT> {
 
     pipeRequest<ResponseT = BaseResponseT>(request: ResourceResponse<ResponseT>): ResourceResponse<ResponseT>;
 
-    getRequestSettings(options: ResourceActionOptions): { url: string, params: { [param: string]: any } }
+    getRequestSettings(options: ResourceActionOptions): { url: string, params: { [param: string]: any } };
 }
 
 export type ResourceResponse<T = any> = Observable<HttpResponse<T>>;
@@ -65,4 +67,16 @@ export type ResourceActionProps = ResourceActionOptions | string | ResourceActio
 export interface RequestSettings {
     url: string,
     params: HttpParams
+}
+
+export interface ResourceCache {
+    [key: string]: BehaviorSubject<any>
+}
+
+export type Readonly<T> = {
+    [K in keyof T]-?: T[K] extends object ? Readonly<T[K]> : T[K]
+}
+
+export interface ResourceEffects {
+    [key: string]: OperatorFunction<unknown, unknown>[]
 }
