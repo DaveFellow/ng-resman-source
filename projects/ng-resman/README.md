@@ -1,3 +1,20 @@
+# v0.4.6. What's new?
+(DISCLAIMER: This update breaks many things from previous version)
+
+I made a complete re-design of this library compared to previous version, taking into consideration all the stuff I've been considering for a long time after I first created it. All the details are bellow in the how to use section.
+
+A quick summary:
+
+- Removed constructor dependency for Resource Manager setup
+
+- Redesigned custom actions declaration, now based on decorators with multiple new possibilities
+
+- Redesigned basic properties setting, they now have to be re-declared with the *override* keyword in the class body
+
+- Now HttpClient depency is set with the *inject()* method in the base class
+
+- Maybe more that I cannot remember
+
 # Resource Manager for Angular
 This is an API resource management library for Angular to make working with APIs more straightforward and less verbose.
 
@@ -8,32 +25,84 @@ Just extend the *ResourceManagement* class into your resource service and pass a
 
 Alternatively, you can just copy and edit this structure into your resource service:
 
-    import { HttpClient } from '@angular/common/http';
     import { Injectable } from '@angular/core';
-    import { ResourceManager } from '@davefellow/ng-resource-mananer';
+    import { ResourceManager } from '@davefellow/ng-resource-manager';
 
     @Injectable({
         providedIn: 'root'
     })
-    export class TestService extends ResourceManager<Object> {
-
-    constructor(override http: HttpClient) {
-        super(http, 'my-prefix');
+    export class TestService extends ResourceManager<CustomType> {
+        // ...
     }
 
 Now you can make request in your controllers (or anywere inside your application) using any of the following methods:
 
-    .list()
-    .details(ID)
-    .create()
-    .update(ID)
-    .destroy(ID)
+- .list()
+- .details(id)
+- .create(body)
+- .update(id, body)
+- .destroy(id)
 
-Each of these function return an *Observable* that can be subscribe as you prefer. The *details*, *update* and *destroy* actions require an *id* parameter typed as *ResourceId*, which is just an union "string | number" type.
+Each of these function return an *Observable* that can be subscribe as you prefer. For example, :
 
-Note that the type parameter in *ResourceManager* has an *Object* type passed, but it can be whatever type of response you want your *list* and *details* requests objects to return. The *list* action will return an array of objects of that type while the *details* action will return an object of that type directly.
+    this.testService.list().subscribe();
+    this.testService.details(654).subscribe();
+    this.testService.create({ name: 'Angela', email: 'angewomon@digitalworld.com' }).subscribe();
+    this.testService.update(154, { email: 'louise1234@gmail.com' }).subscribe();
+    this.testService.delete(596).subscribe();
 
-I highly suggest using this library alongside an *HTTPInterceptor* in order to avoid putting the API base URL in the prefix parameter.
+Note that the type parameter in *ResourceManager* has an *CustomType* generic type passed, but it can be whatever type of response you want your *list*, *details*, *create* and *update* requests objects to return. The *list* action will return an array of objects of that type while the *details* action will return an object of that type directly.
+
+All of the methods can return a different type if you pass it to each of them specifically as in the first generic type argument, so they should expect to return that type specifically instead the one passed to the class. This also applies to the *delete* action, which has an *unknown* type by default.
+
+The *details*, *update* and *destroy* actions require an *id* parameter typed as *ResourceId*, which is just an union "string | number" type.
+
+Both *create* and *update* also require a body argument. The first generic type argument of both (which defaults to class generic type passed) not only tells TypeScript to expect the return type but also the body argument type (with all properties optional in this case). That can be easily overriden by a second generic type argument.
+
+``I highly suggest using this library alongside an *HTTPInterceptor* in order to avoid setting the apiUrl for each Resource Manager service.``
+
+## Configuring the Resource Manager service
+There are some class properties that must be overriden in order for the Resource Manager service to build the URLs of our requests properly. Those are:
+
+- apiUrl: string
+- prefix: string
+- idLocation: RouteIdLocation
+
+You can re-declare them with the *override* keyword to set them globally in the class:
+
+    override readonly apiUrl = 'https://mydomain/api';
+    override readonly prefix = 'customers';
+    override readonly idLocation = 'beforePath';
+
+``I highly suggest to make them *readonly* to avoid any unwanted external manipulation``
+
+Or by setting them in each resource action options when you create a custom action (more about it later), for more granular use.
+
+More about each property:
+
+### apiUrl
+An string that will be put in the beginning of the route, right before the prefix. Each route of the resource service will be built using this property.
+
+This should be used to avoid putting it inside the prefix itself, though as stated before, it's highly recommended using an *HttpInterceptor* for this task, unless we want the specific resource service to connect to a different base Url.
+
+### prefix
+This is just the route prefix, it's basically the object name like 'customers', 'users', 'posts', etc.
+
+### idLocation
+This accepts an *RouteIdLocation* type of value (a string of two values: 'afterPath' and 'beforePath') and will configure the position of the id (if present) in the route, relative to the path segment. For example:
+
+- {prefix}/{id}/{path} <-- beforePath
+- {prefix}/{path}/{id} <-- afterPath.
+
+It always defaults to 'beforePath', so you wouldn't need to set it manually if it already meets your endpoint requirements.
+
+## Final URL example
+Bellow is an example of how the final URL looks like, it includes all the previous properties plus some more specific to the Resource Actions (*path* and *id*):
+
+- {apiUrl}{prefix}
+- {apiUrl}{prefix}/{id}
+- {apiUrl}{prefix}/{id}/{path}
+- {apiUrl}{prefix}/{path}/{id} <-- If idLocation is set to 'afterPath'. More Below.
 
 ## Status
 The *status* object will manage the life cycle of each action request.
@@ -71,95 +140,82 @@ The *.set()* method will accept the name of an action as first parameter and the
 
 Arbitrary action names can also be set as a parameter, in that case an status with that name will be created. For example, if we set:
 
-    .status.setLoading('custom-action')
+    .status.setLoading('customAction')
 
 Then we can do:
 
-    .status.get('custom-action')
+    .status.get('customAction')
 
 And it will return 'loading' as a value.
 
 ``DISCLAIMER: The *status* object doesn't contain the response's state/data of each request, since that should be handled at the developer discretion. Its only purpose is to serve as an indication for the life cycle moment of each request.``
 
+## Custom Resource Actions
+Many times we want to make custom actions outside of the built-in ones (list, create, etc.) and also keep the routes building and status management of the resource manager, in that case we can create a method that returns an Observable, decorated with any of the Resource Action Decorators depending on your need:
 
-## Routes
-The *routes* object can be used to manage the requests URL setup.
+- @ResourceAction()
+- @GetResource()
+- @PostResource()
+- @PutResource()
+- @DeleteResource()
 
-    this.resourceService.routes
+Each of these decorators return an *HttpRequest* observable respective to the decorator type you use, except for *@ResourceAction*, which is the underlying decorator of all the other four.
 
-The routes can be built using the *.build()* method, which will accept the name of an action as a first parameter, an optional *id* as a second parameter and an optional custom path as third parameter. The returned route CAN have one of the following structures:
+These decorators can be passed an argument of the type *ResourceActionProps*, which is an union type that accepts *ResourceActionOptions*, *string* or *ResourceActionArgsSetup*. I know this may feel confusing but let's quickly explain each:
 
-    {PREFIX}
-    {PREFIX}/{ID}
-    {PREFIX}/{ID}/{PATH}
-    {PREFIX}/{PATH}/{ID} <-- If configured using routes options. More Below.
+### ResourceActionOptions 
+This is the most complete option, the other two are just abbreviated methods.
 
-This method is designed to work only with already set paths. For building any arbitrary string, there's the *buildUrl()* method, more about it below.
+This is an object that accepts the following properties (all of them optional):
 
-Whenever a *customPath* parameter is specified in any method (including in the *.build()* method), it will substitute the PATH in the structure.
+- type: ResourceActionVerb
+- path: string
+- id: ResourceId
+- body: BodyT
+- params: UrlParams
+- argsSetup: ResourceActionArgsSetup
+- prefix: string
+- apiUrl: string
+- idLocation: RouteIdLocation
 
-Also, by default, all action paths are empty strings until they are specified in the desired action.
+Most of the time it's not necessary to pass most of them, but let's look at an example:
 
-### Action Path
-You can get each action specific path using the *.getPath()* method, which accepts the name of an action as a parameter:
-
-    .routes.getPath('update')
-    .routes.getPath('list')
-
-This method will mostly return an empty string, unless a path per action is specified using:
-
-    routes.setPath('list', 'custom-list')
-
-The *.setPath()* method will accept the name of an action as first parameter and the new path as second parameter path added to each call made to that action in the resource service.
-
-### Routes options
-The *routes* object can be configured by passing a *RouteOptions* object as a third parameter in the resource service constructor:
-
-    constructor(override http: HttpClient) {
-        const options: RouteOptions = {
-            apiUrl: 'http://localhost:8000'
-            idLocation: 'afterPath'
+    @GetResource({
+        apiUrl: 'https://mydomain/api',
+        prefix: 'customers',
+        idLocation: 'beforePath',
+        path: 'get-premium-only'
+        params: {
+            param1: true,
+            param2: '$600'
         }
-
-        super(http, 'my-prefix', options);
+    });
+    public requestPremiumCustomers() {
+        return new Observable<Customer>();
     }
 
-More regarding each option below.
+In the case of *apiUrl*, *prefix* and *idLocation*, the ones set in this object will override the values set at class level, so most of the time we can just ignore them unless we have very specific requirements for a single resource action. More about the rest bellow:
 
-#### apiUrl
-An string that will be put in the beginning of the route, right before the prefix. Each route of the resource service will be built using this property.
+#### type
+Of type *ResourceActionVerb* which only accepts a string of the following values: get, post, put, delete.
 
-This should be used to avoid putting it inside the prefix itself, though as stated before, it's highly recommended using an *HttpInterceptor* for this task, unless we want the specific resource service to connect to a different base Url.
+It won't make any effect except for the *@ResourceAction* decorator that needs it for functioning.
 
+#### path
+It's the final segment of the request URL, it can be before or after the *id* depending of *idLocation* value.
 
-#### prefix
-This is just the route prefix put in a different place. If specified, it will be ignored anyway unless the second parameter on the *super* keyword is not truthy.
+Some special rules to this property applies depending on how you set it:
 
+- If it's set as an empty string (''), it will be ignored for building the URL
 
-#### idLocation
-This accepts an *RouteIdLocation* type of value ('afterPath' and 'beforePath') and will configure the position of the id (if present) in the route, relative to the path segment. For example:
+- If it's *undefined* (manually or left unset), then the method name will be used as *path* value
 
-    {PREFIX}/{ID}/{PATH} <-- beforePath
-    {PREFIX}/{PATH}/{ID} <-- afterPath.
+Also, it can be set alternatively, more about it later.
 
+#### id and body 
+They're just the *id* and *body* passed for the request. You can hardcode a value here for these properties but as their use should depend on application's flow, it makes no sense to do so, they're here for internal use (or for debugging if you want to use them like that).
 
-### Built-in actions options
-Each built-in action can accept an optional *options* parameter, as a last parameter.
-
-This is a *ResourceActionOptions* object that can have the one of the following properties:
-#### customPath
-It's an arbitrary *string* type property. It will substitute the set path in the specific request call where it's set, for example:
-
-    const options: ResourceActionOptions = {
-        customPath: 'custom-path'
-    };
-
-    this.resourceService.details(5, options)
-    // /my-prefix/5/custom-path
-
-    this.resourceService.create(options)
-    // /my-prefix/custom-path
-
+Instead, they can be set by a method argument if you configure them in the *argsSetup* property. More about it in its respective section bellow.
 
 #### params
 It's an "key: value" pairs object. Any property added will be sent as query params in the request. For example:
@@ -172,74 +228,91 @@ It's an "key: value" pairs object. Any property added will be sent as query para
         }
     };
 
+...Will add the following segment to the final URL: '?id=98&premium=true'.
+
     this.resourceService.list()
     // /my-prefix?page=2&sort_by=name&show=15
 
+As a general rule, the first argument of the decorated method right after the *id* and *body* arguments (see more in the next section) will automatically be used to set this property value, so:
 
-### Build Routes with Arbitrary Path
-To build a route with an arbitrary path, use the *buildUrl()* method, which accepts a *route* string parameter as an argument and returns the formatted value:
+- In the case that *id* OR *body* arguments are configured, then the second argument will automatically be used to set this property value.
 
-    this.resourceService.routes.buildUrl(`my-custom-path`)
+- In the case that both *id* AND *body* arguments are configured, then the third argument in will be used instead.
 
-The above example could return one of the following values, given a "my-prefix" *prefix* and/or a "http://localhost:8000" *apiUrl* options configured in the resource *routes* object:
+- In the case none are configured, the first argument will be used to set this property value.
 
-    /my-prefix/my-custom-path
-    http://localhost:8000/my-prefix/my-custom-path
+For the three rules from above to apply, the argument needs to be a literal object.
 
-If you want to concatenate a resource id in the path, you can directly do it in the *route* parameter or by passing a previously formatted string using the *concatId()* method, which will concatenate the id to the path depending on the *idLocation* property set in the *routes* object.
+#### argsSetup
+It's an array that accept two possible string values: 'id' and 'body'.
 
-This method will accept an *id* as a first argument and *path* as a second argument, this would be the structure of the value it returns:
+It can be any or both, and depending on the order of each value in the array, the indexes of the *id* and *body* arguments in the decorated method will be taken to set the values for *id* and *body* internally for the request. So, for example, we have this:
 
-    {ID}/{PATH} <-- when idLocation is set to 'beforePath'
-    {PATH}/{ID} <-- when idLocation is set to 'afterPath'.
-
-So, as an example of how both *builtUrl()* and *concatId()* methods could work together, we could do something like this:
-
-    const path: string = this.routes.concatId(13, 'my-custom-path');
-    const route: string = this.routes.buildUrl(path);
-
-    // my-prefix/13/my-custom-path
-
-
-## Requests pre-processing
-Each request is pre-processed (piped) for managing its status along its life cycle. For that, they use the *pipeRequest()* method, which accepts *request* as a first parameter and an *actionName* as a second parameter:
-
-    const request: Observable<Object> = this.http.get(url);
-    const pipedRequest: Observable<Object> = this.pipeRequest(request, 'custom-request');
-
-The first parameter (*request*) is the request as is, it is literally the *Observable* returned by any of the HttpClient request method (*.get()*, *.post()*, etc.).
-
-the second parameter (*actionName*) will be used to manage the status of the action, so following the above example:
-
-    this.resourceService.status.isLoading('custom-action');
-    this.resourceService.status.setSuccess('custom-action');
-
-The *pipeRequest()* method will return an *Observable\<Object\>* that can be subscribed for making the request.
-
-The status of the action is also automatically managed on subscription by the *pipeRequest()* method so you won't have to perform further actions, unless you want to, by piping the returned observables (for example):
-
-    this.pipeRequest(request, 'custom-action').pipe(
-        map( ... ),
-        debounceTime( ... ),
-        catchError( ... )
-    );
-
-## Building custom actions
-Many times we want to make custom actions outside of the built-in ones (list, create, etc.) and also keep the routes building and status management of the resource manager, in that case we can make use of everything explained above... but if you're lazy like I am, here's a quick template you can use and modify as you require:
-
-    public releasePayment(paymentId: ResourceId): Observable<Object> {
-        const path: string = this.routes.concatId(paymentId, 'release');
-
-        const url: string = this.routes.buildUrl(path);
-
-        const request: Observable<Object> = this.http.get(url);
-
-        return this.pipeRequest(request, 'release-payment') as Observable<Object>;
+    @PutResource({
+        // ...
+        argsSetup: ['id', 'body']
+    })
+    public myDecoratedMethod(id: string, body: MyReturnType) {
+        // ...
     }
 
-Remember to set an idle status to this custom action in the constructor as a good practice, so we avoid having a *null* status whenever we want to check for its value before the any subscription is done:
+That means that the first argument value will be taken for the *id* property and the second argument value for *body* property in the *ResourceActionOptions* object which will then be used in the request setup. Here's are some configurations examples:
 
-    constructor(override http: HttpClient) {
-        super(http, 'my-prefix');
+- ['body', 'id']: The *body* value will be taken from method argument and the *id* value from the second one
+
+- [ 'body' ]: The *body* value will be taken from first argument, and no *id* argument is configured
+
+- [ 'id' ]: The *id* value will be taken from first argument, and no *body* argument is configured
+
+- [], *null*, *undefined* or *unset*: No argument will be taken to set *id* or *body* values
+
+In the case a value of type different than *string* or *number* is put in place of an *id* argument, it will be invalid and the *id* property will be *undefined* internally. Same for *body* if the value is not of type *object* (a literal object or array).
+
+This setup also overrides any *id* or *body* value set manually in the decorator's object.
+
+### Alternative Decorators Setup
+You can set a custom action with some less verbose setups for the decorators (except for *@ResourceAction*). So instead of passing a full ResourceActionOptions object you can do it the following ways:
+
+#### By leaving it empty
+Many times the path can be used a the method name (say, it has no dashes), in that case you can just leave the decorator without argument and the decorated method name will be used as value for the *path* property:
+
+    @GetResource()
+    public members() {
+        return new Observable<Member[]>()
+    }
+
+Same can be achieved by passing an *undefined* value (but why you'd do that?).
+
+#### By passing a string
+Many the time you only need to add (or skip) the path segment to the request endpoint and it can't be used directly as a method name (or you just want to use a different value for whatever reason), in that case you can pass a string as an argument in the decorator and that value would be used to set the *path* value. For example:
+
+    @GetResource('my-filtered-list')
+    public getFilteredList(params: ParamsCustomType) {
+        return new Observable<CustomType>()
+    }
+
+If you pass an empty string, it will skip the path segment entirely (as in the built-in actions, for example).
+
+#### By passing an array
+Sometimes you want to just configure the *id* and *body* arguments and are ok with leaving the method name for the path segment, in that case you can just pass an array the same way you do for the *argsSetup*:
+
+    @GetResource(['id', 'body'])
+    public setMember(id: string, body: Member) {
+        return new Observable<Member>()
+    }
+
+#### By passing an empty string AND an array
+If you still want the benefits of an abbreviated declaration but need the benefit of custom path and arguments setup (kinda greedy, but I have you covered!), you can do it this way:
+
+    @GetResource('orders', ['id'])
+    public getOrdersFromCustomer(id: string) {
+        return new Observable<Order[]>()
+    }
+
+
+### Final consideration
+Remember to set an idle status to any custom action in the *constructor* or in any lifecycle method as a good practice, so we avoid having a *null* status whenever we want to check for its value before the any subscription is done:
+
+    constructor() { // Or ngOnInit, ngAfterViewInit, etc.
         this.status.setIdle('release-payment')
     }

@@ -53,8 +53,6 @@ export type ResourceActionVerb = 'get' | 'post' | 'put' | 'delete';
 export type ResourceActionArgsSetup = ('id' | 'body')[];
 export interface ResourceActionOptions<ResponseT = any, BodyT = ResponseT> extends RouteOptions {
     type?: ResourceActionVerb,
-    path?: string,
-    id?: ResourceId,
     body?: BodyT,
     params?: UrlParams,
     argsSetup?: ResourceActionArgsSetup

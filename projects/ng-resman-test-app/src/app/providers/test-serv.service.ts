@@ -10,7 +10,7 @@ interface PokemonData {
   providedIn: 'root'
 })
 export class TestServService extends ResourceManager<PokemonData> {
-  override prefix = 'pokemon';
+  override readonly prefix = 'pokemon';
 
   @GetResource('', ['id'])
   public getPokemon(id: string) {

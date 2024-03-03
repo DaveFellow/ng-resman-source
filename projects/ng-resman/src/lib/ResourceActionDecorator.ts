@@ -26,7 +26,7 @@ export function ResourceAction<ResponseT = any>(options: ResourceActionOptions):
                     request = this.http.get<HttpResponse<ResponseT>>(url, { params }); break;
             }
         
-            return this.pipeRequest<ResponseT>(request);
+            return this.pipeRequest<ResponseT>(request, propertyKey);
         }
     }
 }
