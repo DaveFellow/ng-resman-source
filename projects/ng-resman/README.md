@@ -366,7 +366,6 @@ Also, sometimes you need a default cached data to work with while you wait for y
 You can comfortably do so with the *setActionDefaults* method. Do it in the service *constructor* as a good practice, so your resource manager is ready before your component is initialized: 
 
     constructor() {
+        super();
         this.setActionDefaults('release-payment', []);
     }
-
-``DISCLAIMER: Don't use *setActionDefaults* method after this since it would overwrite your cached data in an unwanted way and cause undesired side effects to your application's flow.``

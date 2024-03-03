@@ -84,7 +84,10 @@ export abstract class ResourceManager<BaseResponseT = any> implements ResourceMa
         return this.cache[actionName] as BehaviorSubject<T>;
     }
 
-    setActionDefaults(actionName: string, initialCachedData?: any): void {
+    protected setActionDefaults(actionName: string, initialCachedData?: any): void {
+        if (this.cached(actionName) !== undefined || this.status.get(actionName) !== undefined) {
+            return;
+        }
         this.status.setIdle(actionName);
         this.setCached(actionName, initialCachedData);
     }

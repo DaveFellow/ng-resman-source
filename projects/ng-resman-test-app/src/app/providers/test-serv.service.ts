@@ -24,6 +24,11 @@ export class TestServService extends ResourceManager<PokemonData> {
     })]
   }
 
+  constructor() {
+    super();
+    this.setActionDefaults('getPokemon');
+  }
+
   @GetResource('', ['id'])
   public getPokemon(id: string) {
     return new Observable<PokemonData>();
